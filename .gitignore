@@ -12,14 +12,12 @@ dist
 dist-ssr
 *.local
 
-# environment variables (real secrets/tokens) — .env.example stays committed as documentation
+# environment variables (real secrets/tokens) — *.env.example files stay committed as documentation.
+# Repo-wide safety net so no package's .env can slip in by accident; packages may also
+# list these in their own .gitignore for local clarity (see e.g. apps/web/.gitignore).
 .env
 .env.local
 .env.*.local
-
-# local SQLite database (machine-specific, created by `yarn install` / `yarn db:setup`)
-/data/*.db
-/data/*.db-*
 
 # Editor directories and files
 .vscode/*
