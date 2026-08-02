@@ -7,3 +7,8 @@
 # local SQLite database (machine-specific, created by `yarn install` / `yarn db:setup`)
 /data/*.db
 /data/*.db-*
+
+# Cypress run artifacts (screenshots/videos/downloads from local or CI runs)
+/cypress/screenshots
+/cypress/videos
+/cypress/downloads

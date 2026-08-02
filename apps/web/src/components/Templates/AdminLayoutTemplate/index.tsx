@@ -1,13 +1,21 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import Button from '../../Atoms/Button'
+import { mergeClassNames } from '../../../utils/mergeClassNames'
 import { useAdminLayoutTemplate } from './useAdminLayoutTemplate'
 
 function AdminLayoutTemplate() {
   const { navItems } = useAdminLayoutTemplate()
 
+  const handleSignOut = () => {
+    toast.info('Encerrar sessão ainda não está disponível.')
+  }
+
   return (
     <div className="min-h-screen">
-      <header className="border-b border-solid p-4">
+      <header className="flex items-center justify-between border-b border-solid p-4">
         <p className="font-semibold">AutoAgenda — Administrador</p>
+        <Button onClick={handleSignOut}>Sair</Button>
       </header>
       <nav aria-label="Navegação do administrador" className="border-b border-solid p-4">
         <ul className="flex flex-wrap gap-4">
@@ -17,7 +25,10 @@ function AdminLayoutTemplate() {
                 to={item.to}
                 end={item.to === '/admin'}
                 className={({ isActive }) =>
-                  `min-h-touch inline-flex items-center rounded-lg p-2 ${isActive ? 'bg-primary text-white' : ''}`
+                  mergeClassNames(
+                    'min-h-touch inline-flex items-center rounded-lg p-2',
+                    isActive && 'bg-primary text-white',
+                  )
                 }
               >
                 {item.label}

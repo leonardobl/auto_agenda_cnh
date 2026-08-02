@@ -74,6 +74,14 @@ This project uses `yarn` (root `yarn.lock`, not npm/pnpm).
 
 A global slash command, `/git-commit`, is available (defined in `~/.claude/commands/git-commit.md`, works in any repo). When the user runs it: inspect `git status`/`git diff`/`git log` to learn this repo's real commit style, stage only the relevant changes, and create a single semantic commit with an English message matching that style. It never pushes — it always stops right after the local commit so the user can review and push themselves.
 
+**Every `/git-commit` run in this repo also updates [CHANGELOG.md](CHANGELOG.md)**, in the same commit, before creating it. This project uses a **date-based** changelog, not version-based:
+
+- Entries are grouped under a `## AAAA-MM-DD` heading (ISO order: year, month, day) for the day the commit is made, newest date first. If today's date section already exists (an earlier commit today already added one), append to it instead of creating a duplicate heading.
+- Within a date section, use category subheadings in **Portuguese** — `### Adicionado`, `### Alterado`, `### Corrigido`, `### Removido` (skip whichever don't apply) — mirroring [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)'s categories, translated.
+- Keep entries short and user-facing (what changed, not how) — no restating the whole diff, no internal implementation detail that doesn't matter outside the codebase. Skip purely internal/no-op changes (formatting-only, comment-only) if they genuinely have nothing worth telling a reader.
+
+**`CHANGELOG.md` content (headings and entries) is always written in Brazilian Portuguese (pt-BR)** — this is a deliberate exception to the "commit messages are English" rule above; the two are independent (commit subject/body stays English, the changelog entry describing that same commit is pt-BR).
+
 ## Spec-driven workflow (OpenSpec)
 
 This repo uses the `openspec` CLI plus the bundled `opsx` slash commands for a propose → apply → archive workflow, configured via `openspec/config.yaml` at the repo root (unaffected by the monorepo layout — it plans changes across any package):
@@ -242,6 +250,7 @@ Never reference images via remote URLs (Figma URLs, CDN links). Export assets lo
 - **Don't bake placement/spacing concerns into shared component variants.** Things like `text-center`, `margin-*`, or `mb-*` are call-site decisions, not properties of the component itself — a shared `Typography`/heading variant should own what's intrinsic to that style (size, weight, line height, color), not how it's positioned wherever it's dropped. Add placement classes at the call site (they merge with the variant's own classes), don't add a prop/variant for it.
 - **Build mobile-first** — DOC-01 §5 and RNF-005 both call out responsiveness as MVP-required (320–1440 px). Unprefixed classes are the mobile layout; add `sm:`/`md:`/`lg:` to progressively enhance. Don't ship desktop measurements unprefixed and call it done — make a deliberate mobile layout (stack multi-column content, let fixed-width elements shrink).
 - Follow DOC-06 §4/§5 for the concrete design-system requirements this maps onto: minimum 16px base font, 4px spacing scale (4/8/12/16/24/32/48), 8–12px border radius, 44×44px minimum touch targets, and WCAG 2.2 AA contrast — encode these as Tailwind theme tokens rather than re-deriving them per component.
+- **Combine/conditionally apply classes with `mergeClassNames` (`apps/web/src/utils/mergeClassNames.ts`, a `clsx` + `tailwind-merge` wrapper) — never with a template literal.** Don't write `` `base-classes ${condition ? 'a' : 'b'}` `` or `` `${className}` ``; write `mergeClassNames('base-classes', condition && 'a', className)` instead. A template literal can't resolve conflicting Tailwind utilities (e.g. a caller passing `p-2` to override a component's own `p-4` leaves both classes in the string, and whichever CSS rule happens to be defined later in the stylesheet wins — not the one the caller intended); `tailwind-merge` resolves that conflict correctly by dropping the earlier, overridden utility. This applies everywhere a class list is assembled dynamically: component `className` props merging with a caller-supplied `className`, and conditional classes like React Router's `NavLink` active-state styling.
 
 ## Forms
 
@@ -249,13 +258,17 @@ Use `react-hook-form` + `zod` for all forms. If the project ends up needing both
 
 ## Testing conventions
 
-- **Every new component and page needs a unit test**, written in the same pass it's created, not as a follow-up.
-- Tests live in a `__tests__/` folder inside the component's own directory, not loose next to `index.tsx` (e.g. `Button/__tests__/button.test.tsx` for `Button/index.tsx`) — filename is the `camelCase` version of the component name + `.test.tsx`.
-- Once the provider tree (Query client, router, any Context) exists, build a shared render helper (e.g. `apps/web/src/utils/renderWithProviders.tsx`) that wraps `render()` with all of them, matching the app's real provider tree — any component using a data-fetching hook needs this wrapper or its own `QueryClientProvider` to avoid a "no QueryClient set" error.
-- Write with `@testing-library/react` + `@testing-library/user-event`, run via Vitest.
-- **One behavior per test** — avoid asserting multiple unrelated things in a single test block. Test descriptions are written in Portuguese (e.g. `test("Deve renderizar...")`), matching UI copy language, even though component/prop names stay in English.
+**Every new component and page needs a test, written in the same pass it's created, not as a follow-up.** This has been skipped more than once already — treat it as a hard rule, not a nice-to-have: a component/page PR-equivalent isn't done until its test exists alongside it.
+
+- **Unit/integration tests use Cypress component testing** (`cypress`, configured in `apps/web/cypress.config.ts`) — **not** Vitest/Jest/React Testing Library, a deliberate deviation from `docs/08_Plano_de_Testes_Qualidade.md` §2's suggested "Vitest/Jest" + "React Testing Library + Vitest" tooling for the unit/component rows of the test pyramid (E2E in that same table still points to Cypress/Playwright, which lines up). Record this the same way as the other academic-spec deviations if it ever needs revisiting.
+- Tests live in a `__tests__/` folder inside the component's own directory, not loose next to `index.tsx` (e.g. `Button/__tests__/button.cy.tsx` for `Button/index.tsx`) — filename is the `camelCase` version of the component name + `.cy.tsx` (Cypress's own convention, not `.test.tsx`).
+- Mount components via the custom `cy.mount` command (`apps/web/cypress/support/component.tsx`), which already wraps every mount in the app's real provider tree (`QueryClientProvider`, `MemoryRouter`) — don't reach for a raw `mount()` from `cypress/react` directly, and don't re-wrap providers per test.
+- **One behavior per test** — avoid asserting multiple unrelated things in a single `it()` block. Test descriptions are written in Portuguese (e.g. `it('Deve renderizar...')`), matching UI copy language, even though component/prop names stay in English.
 - For presentational logic that doesn't need React state, prefer a small pure function file (e.g. `formatCurrency.ts`) co-located with the component instead of a `use*` hook — it's trivially unit-testable in isolation and keeps `index.tsx` focused on rendering.
-- `docs/08_Plano_de_Testes_Qualidade.md` has the fuller test plan (unit/integration/component/E2E pyramid, minimum test cases TST-001…TST-025, required E2E scripts) — consult it once testing infrastructure is actually being set up.
+- `docs/08_Plano_de_Testes_Qualidade.md` has the fuller test plan (test pyramid, minimum test cases TST-001…TST-025, required E2E scripts) — consult it as more testing infrastructure (backend integration, E2E) gets set up.
+- Run tests with `yarn --cwd apps/web test` (headless, CI-style) or `yarn --cwd apps/web test:open` (interactive runner).
+
+**Known environment caveat**: in this sandboxed dev environment, `cypress install`'s binary download appears to resolve to the wrong artifact — the extracted `Cypress` executable turns out to be a plain Node.js binary instead of the real Electron-based Cypress app (confirmed by running it with `--help`, which prints Node's own CLI help instead of Cypress's), so `cypress run`/`cypress open` fail with cryptic "bad option: --no-sandbox" errors. This is a network/download restriction in this specific sandbox, not a config or code problem — tests are still written correctly and should run normally in an unrestricted environment (the user's own machine, CI). If this comes up again, tell the user rather than trying to work around it blindly, and suggest re-running `npx cypress install --force` outside the sandbox.
 
 ## Browser verification
 
