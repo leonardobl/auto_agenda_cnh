@@ -1,0 +1,40 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# environment variables (real secrets/tokens) — .env.example stays committed as documentation
+.env
+.env.local
+.env.*.local
+
+# local SQLite database (machine-specific, created by `yarn install` / `yarn db:setup`)
+/data/*.db
+/data/*.db-*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# local-only tooling (OpenSpec artifacts, Claude Code config)
+/openspec
+/.claude/*
+# ...except team-shared, path-scoped conventions (see .claude/rules/)
+!/.claude/rules/
+!/.claude/rules/**
