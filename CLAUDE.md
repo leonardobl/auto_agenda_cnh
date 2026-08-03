@@ -22,45 +22,53 @@ When instructions from different sources could apply to the same task, resolve i
 
 ## Project state
 
-This is a Yarn workspaces monorepo for **AutoAgenda**. `apps/web` (Vite + React 19 + TypeScript + TailwindCSS) is the only implemented package — the default Vite template markup/CSS/assets have been removed; `apps/web/src/App.tsx` currently only renders placeholder text, no real application features/routes/screens have been built yet. `apps/api` (backend) and `packages/contracts` (shared schemas/types) exist as empty placeholders — see Architecture: backend (planned) below. The sections below define the target architecture/conventions to build *toward* as real features land.
+This is a Yarn workspaces monorepo for **AutoAgenda**. `apps/web` (Vite + React 19 + TypeScript + TailwindCSS) has a working shell (routing, providers, per-profile navigation) and auth screens (login/forgot/reset — UI only, submission stubbed). `apps/api` (Node.js/Express) has its infrastructure bootstrapped (server, middleware, health checks, SQLite connection) but no domain endpoints yet — nothing in `apps/web` calls it for real yet. `packages/contracts` (shared schemas/types) is still an empty placeholder. The sections below define the target architecture/conventions to build *toward* as real features land.
 
 ## Repository structure
 
 ```
 apps/web/            # React/Vite frontend — implemented, see Target stack
-apps/api/             # Node.js backend — placeholder only, not built yet
+apps/api/             # Node.js/Express backend — infrastructure implemented, no domain endpoints yet
 packages/contracts/   # Shared schemas/types between web and api — placeholder only
 docs/                 # Academic specification set (DOC-00…DOC-10) — source of truth, see docs/README.md
 infra/                # Docker/deployment config — placeholder, not built yet
 openspec/             # Local-only planning tooling (gitignored, see Spec-driven workflow below)
 ```
 
-Root `package.json` only declares the Yarn workspaces (`apps/*`, `packages/*`) — it has no scripts of its own. Run a package's scripts either with `yarn workspace <package-name> <script>` (e.g. `yarn workspace @auto-agenda-cnh/web dev`) or `yarn --cwd apps/web <script>` from the repo root. **Unless stated otherwise, every relative path mentioned elsewhere in this file (`src/`, `scripts/`, `data/`, `package.json`, `tsconfig*.json`, `tailwind.config.js`, etc.) is relative to `apps/web/`**, since that's the only implemented package so far — once `apps/api` is built, its own paths will be called out explicitly as `apps/api/...`.
+Root `package.json` only declares the Yarn workspaces (`apps/*`, `packages/*`) — it has no scripts of its own. Run a package's scripts either with `yarn workspace <package-name> <script>` (e.g. `yarn workspace @auto-agenda-cnh/web dev`) or `yarn --cwd apps/web <script>` from the repo root. **Unless stated otherwise, every relative path mentioned elsewhere in this file (`src/`, `scripts/`, `data/`, `package.json`, `tsconfig*.json`, `tailwind.config.js`, etc.) is relative to `apps/web/`** for frontend conventions, and relative to `apps/api/` for backend conventions — each section makes clear which package it's about.
 
 ## Reconciling with the academic spec
 
-`docs/` (see Precedence above) is the academic specification set this project must satisfy for Projeto Integrador II. Two places where the actual implementation deliberately deviates from what those documents prescribe — **both pending confirmation with the professor per DOC-10 §8**, so they may change:
+`docs/` (see Precedence above) is the academic specification set this project must satisfy for Projeto Integrador II. Several places where the actual implementation deliberately deviates from what those documents prescribe — **all pending confirmation with the professor per DOC-10 §8**, so they may change:
 
 - **Database: local SQLite, not PostgreSQL.** DOC-04 §1, DOC-05 §1, and DOC-09 §4/§7 all specify PostgreSQL. This project keeps the already-working local SQLite setup (`node:sqlite`, see Local database below) instead. If/when this gets confirmed to need to change, treat it as a real migration (schema, queries, `DATABASE_URL`), not a config toggle.
-- **Auth/session: HttpOnly cookie, not client-readable storage.** SEG-002 (DOC-07 §2) requires session state in an HttpOnly cookie and explicitly forbids an access token in `localStorage`. This supersedes an earlier project agreement to use `sessionStorage` for the auth token — that agreement is retired. See Auth & state below for what actually applies now. No backend exists yet, so this is the target for when auth is built, not a description of working code.
+- **Backend: TypeScript, not plain JavaScript.** DOC-04 §1 says "Node.js LTS com Express e JavaScript ES Modules." `apps/api` uses TypeScript instead, for consistency with `apps/web` (also TypeScript) and the type-safety that implies. Runs natively on Node ≥22.5 via built-in type-stripping — no bundler/compiler needed at runtime, `tsc --noEmit` is a type-check-only CI gate (see Architecture: backend below).
+- **Auth/session: HttpOnly cookie, not client-readable storage.** SEG-002 (DOC-07 §2) requires session state in an HttpOnly cookie and explicitly forbids an access token in `localStorage`. This supersedes an earlier project agreement to use `sessionStorage` for the auth token — that agreement is retired. See Auth & state below for what actually applies now. No auth endpoint exists yet, so this is the target for when it's built, not a description of working code.
 - **DOC-03 (front-end specification) was never supplied.** Routes, screens, and component conventions are therefore owned by this project itself rather than derived from that document — see Architecture: component structure and the front-end best-practices mandate below. Details in `docs/README.md`.
 
-Everything else in `docs/` (business rules, data dictionary shape, security requirements beyond SEG-002, test plan, etc.) is still the target to build toward — these two items are the only recorded deviations.
+Everything else in `docs/` (business rules, data dictionary shape, security requirements beyond SEG-002, test plan, etc.) is still the target to build toward — these are the only recorded deviations.
 
 ## Commands
 
 ```bash
-yarn install                          # from repo root — installs every workspace package + runs apps/web's postinstall (SQLite setup)
+yarn install                          # from repo root — installs every workspace package + runs apps/api's postinstall (SQLite setup)
+
+# apps/web
 yarn workspace @auto-agenda-cnh/web dev       # start Vite dev server
 yarn workspace @auto-agenda-cnh/web build     # tsc -b (project references) then vite build
 yarn workspace @auto-agenda-cnh/web lint      # eslint .
 yarn workspace @auto-agenda-cnh/web preview   # preview a production build
-yarn workspace @auto-agenda-cnh/web db:setup  # (re-)create the local SQLite file, idempotent
+yarn workspace @auto-agenda-cnh/web test      # cypress run --component
+
+# apps/api
+yarn workspace @auto-agenda-cnh/api dev       # start the API with auto-restart (node --watch, runs .ts directly)
+yarn workspace @auto-agenda-cnh/api start     # start the API (no auto-restart)
+yarn workspace @auto-agenda-cnh/api build     # tsc --noEmit — type-check only, no bundler needed
+yarn workspace @auto-agenda-cnh/api lint      # eslint .
+yarn workspace @auto-agenda-cnh/api db:setup  # (re-)create the local SQLite file, idempotent
 ```
 
-Equivalently, `yarn --cwd apps/web <script>` works the same way and is shorter to type.
-
-No test runner is configured yet. When adding one, prefer **Vitest** (Vite-native, and the natural fit for `apps/web`'s build tool — see Testing conventions below).
+Equivalently, `yarn --cwd apps/web <script>` / `yarn --cwd apps/api <script>` work the same way and are shorter to type.
 
 This project uses `yarn` (root `yarn.lock`, not npm/pnpm).
 
@@ -97,7 +105,7 @@ When adding a non-trivial feature, prefer creating an OpenSpec change (via `/ops
 
 ## Target stack
 
-Installed and ready to use in `apps/web` — actual routes/queries/forms/screens still need to be built on top of these, per the conventions below:
+**`apps/web`** — actual routes/queries/forms/screens still need to be built on top of these, per the conventions below:
 
 | Concern               | Library                                                                |
 | ---------------------- | ----------------------------------------------------------------------- |
@@ -107,30 +115,50 @@ Installed and ready to use in `apps/web` — actual routes/queries/forms/screens
 | Styling                | TailwindCSS **v3** (LTS — do not upgrade to v4 without an explicit decision to do so) |
 | HTTP                   | `axios`                                                                |
 | Toasts/notifications   | `react-toastify`                                                       |
-| Database               | SQLite, local file, via Node's built-in `node:sqlite` — see "Reconciling with the academic spec" above for why not PostgreSQL |
-| Backend                | Node.js, `apps/api` — not built yet, see Architecture: backend (planned) |
+| Testing                | Cypress component testing — see Testing conventions                    |
 | Auth/session           | Not built yet — target is HttpOnly cookie sessions, see "Reconciling with the academic spec" above |
-| Testing                | not set up yet — see Testing conventions                               |
 
 Tailwind config lives in `apps/web/tailwind.config.js` (`content` already points at `index.html` + `src/**/*.{js,ts,jsx,tsx}`) and `apps/web/postcss.config.js`; global directives (`@tailwind base/components/utilities`) live in `apps/web/src/index.css`.
 
+**`apps/api`** — infrastructure only so far, no domain endpoints:
+
+| Concern               | Library                                                                |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Language               | TypeScript, ES Modules — deviates from DOC-04 §1's "JavaScript", see "Reconciling with the academic spec" above. Runs natively on Node via type-stripping, no bundler |
+| HTTP framework         | Express (v5)                                                           |
+| Security headers       | `helmet`                                                                |
+| CORS                   | `cors`, restricted to the configured `APP_ORIGIN`                       |
+| Database               | SQLite, local file, via Node's built-in `node:sqlite` — plain SQL, no ORM/query builder (deliberate choice, see design notes in the archived `api-bootstrap` OpenSpec change) |
+
 ## Local database (SQLite)
 
-`apps/web/scripts/setup-db.js` creates the local SQLite database file (default `apps/web/data/app.db`, overridable via the `DB_PATH` env var) using Node's built-in `node:sqlite` module (`DatabaseSync`) — no extra dependency, no native build step. It's wired as `postinstall` in `apps/web/package.json`, so it runs automatically whenever `yarn install` runs at the repo root (Yarn workspaces execute each package's own lifecycle scripts), and is also runnable manually via `yarn workspace @auto-agenda-cnh/web db:setup`. It's idempotent — safe to re-run, never wipes existing data.
+`apps/api/scripts/setup-db.ts` creates the local SQLite database file (default `apps/api/data/app.db`, overridable via the `DB_PATH` env var) using Node's built-in `node:sqlite` module (`DatabaseSync`) — no extra dependency, no native build step. It's wired as `postinstall` in `apps/api/package.json`, so it runs automatically whenever `yarn install` runs at the repo root, and is also runnable manually via `yarn workspace @auto-agenda-cnh/api db:setup`. It's idempotent — safe to re-run, never wipes existing data.
 
-`apps/web/data/*.db` (and its WAL/SHM sidecar files) are gitignored — this is a local, per-machine file, not something committed to the repo. Anyone cloning the repo gets a fresh empty database on their first `yarn install`.
+`apps/api/data/*.db` (and its WAL/SHM sidecar files) are gitignored — this is a local, per-machine file, not something committed to the repo. Anyone cloning the repo gets a fresh empty database on their first `yarn install`.
 
-**Requires Node ≥ 22.5** (`node:sqlite` availability) — declared in `apps/web/package.json`'s `engines` field. Once `apps/api` is built and becomes the actual owner of the database connection, this section moves/expands there — for now `apps/web`'s script is only what exists.
+**`apps/web` never owns or touches this file** — it belongs entirely to `apps/api` (see DOC-09 §1: the browser/frontend never accesses the database directly). This is a deliberate migration: `apps/web` briefly owned the SQLite setup script before a backend existed; that ownership moved to `apps/api` once it was bootstrapped, and shouldn't move back.
 
-## Architecture: backend (planned)
+**Requires Node ≥ 22.5** (`node:sqlite` availability) — declared in `apps/api/package.json`'s `engines` field.
 
-The backend (`apps/api`) hasn't been built yet — this project is a **monorepo, not a separate-service split**: the Node.js backend and the Vite/React frontend live in the same repo (see Repository structure above), matching DOC-09 §1's architecture (React client, REST API, database — the browser never talks to the database directly).
+## Architecture: backend
 
-When the backend is built:
+`apps/api` is a Node.js/Express server living in the same repo as the frontend (see Repository structure above — **monorepo, not a separate-service split**), matching DOC-09 §1's architecture (React client, REST API, database — the browser never talks to the database directly).
 
-- It talks to the local SQLite database (see Local database above) — no ORM/query-builder/framework choice has been made yet; don't assume Express, Fastify, Prisma, Drizzle, etc. until that decision is actually made. `docs/04_Especificacao_BackEnd_API.md` describes the aspirational architecture (Node.js/Express, modular routes/controllers/services/repositories) — useful as a reference shape, but its PostgreSQL assumption doesn't apply (see "Reconciling with the academic spec").
-- Auth/session is HttpOnly-cookie-based per SEG-002 — no access token should ever be readable from `apps/web`'s client-side JS.
-- Don't build ahead of instructions here — wait for direction on the actual API shape/framework before scaffolding server code.
+What exists so far (infrastructure only — see `docs/04_Especificacao_BackEnd_API.md` §2 for the fuller aspirational layout this follows):
+
+- `src/config/env.ts` — reads and validates required env vars (`NODE_ENV`, `PORT`, `APP_ORIGIN`; `DB_PATH` optional), fails fast (process exits) if any required var is missing or invalid (BE-013).
+- `src/database/connection.ts` — opens the SQLite connection (see Local database above).
+- `src/app.ts` — the Express app: `helmet`, `cors` (restricted to `APP_ORIGIN`), JSON body parsing, health routes, 404 handler, centralized error handler.
+- `src/http/routes/healthRoutes.ts` — `GET /health` (liveness) and `GET /health/db` (readiness, checks the SQLite connection).
+- `src/http/middlewares/errorHandler.ts` and `notFoundHandler.ts` — both respond with the `docs/04` §6.3 error envelope (`code`, `message`, optional `fieldErrors`, `correlationId`), never leaking stack traces (SEG-013). Unused Express handler params (e.g. `next` in an error handler) are prefixed `_` rather than dropped — Express detects middleware type by parameter *count*, so all 4 params must stay declared on an error handler even when unused.
+- `src/http/controllers/`, `src/modules/`, `src/repositories/`, `src/shared/` exist as scaffolded, empty directories (each with a short `README.md`) — ready for the first domain feature, not yet populated with one.
+- `src/server.ts` is the actual entrypoint: loads env, opens the DB connection, builds the app, starts listening.
+- Relative imports between `.ts` files use the literal `.ts` extension (e.g. `import { loadEnv } from './config/env.ts'`) — required by Node's native type-stripping, which resolves the real file on disk (unlike the `tsc`/bundler convention of writing `.js` for a `.ts` source). `tsconfig.json` sets `allowImportingTsExtensions` + `noEmit` to match: no bundler, `tsc --noEmit` (`yarn build`) is a type-check-only CI gate, same split `apps/web` uses between type-checking and actual bundling.
+
+Not built yet — don't assume any of this exists until it lands in its own change:
+- No domain endpoints (auth, students, instructors, vehicles, appointments) — `docs/04` §5's full endpoint list, one focused change at a time.
+- No auth/session middleware — SEG-002's HttpOnly cookie approach needs a real login endpoint to issue the cookie first.
+- No migrations tooling (BE-014) — the database has no schema/tables yet beyond what `PRAGMA journal_mode` sets.
 
 ## Front-end conventions and design consistency
 
@@ -143,7 +171,10 @@ DOC-03 (which would otherwise define front-end routes, screens, and component co
 
 ## Environment variables
 
-Required variables are declared in `apps/web/.env.example` (committed) — copy it to `apps/web/.env` (gitignored, never committed) and fill in real values. Vite only exposes vars prefixed `VITE_` to client code (a Node-side backend, once built, can read any env var directly — it will likely get its own `.env`/`.env.example` under `apps/api/` rather than sharing `apps/web`'s). There are currently no required variables — `apps/web/.env.example` only documents the optional `DB_PATH` override for the local SQLite file.
+Required variables are declared in each package's own `.env.example` (committed) — copy it to that package's `.env` (gitignored, never committed) and fill in real values. Vite only exposes vars prefixed `VITE_` to client code; `apps/api` (Node-side) reads any env var directly and fails fast at startup if a required one is missing/invalid (see Architecture: backend above).
+
+- `apps/web` currently has **no required variables** at all (nothing has needed one since the SQLite setup moved to `apps/api` — see Local database above).
+- `apps/api` currently requires `NODE_ENV`, `PORT`, `APP_ORIGIN`; `DB_PATH` is optional (defaults to `data/app.db`).
 
 **Whenever a new required env var is introduced, add it to the relevant package's `.env.example` (with an empty/placeholder value, never a real secret) in the same change**, and update the table in [README.md](README.md#configuração) — that's what a new setup follows, not this file.
 
@@ -195,7 +226,7 @@ navigate(destino);
 
 ## Data & server state
 
-Once an API layer exists (`apps/api`), put services in `apps/web/src/services/` as static-method classes, calling through an axios instance in `apps/web/src/Apis/` (driven by an env var for the API's base URL).
+Once `apps/api` has a real endpoint to call (its infrastructure exists — see Architecture: backend above — but no domain endpoints yet), put services in `apps/web/src/services/` as static-method classes, calling through an axios instance in `apps/web/src/Apis/` (driven by an env var for the API's base URL).
 
 **Every request — query or mutation — goes through a React Query hook.** Never call a service method directly from a component or page-level hook, and never reach for a raw `useEffect` + `useState` fetch, even for a one-off call. Service-backed query hooks live in `apps/web/src/hooks/queries/<domain>/use<Name>/`, one folder per domain — kept separate from component/template hooks (`use[Template]`), which stay co-located with the component.
 
@@ -206,13 +237,13 @@ Query hooks have a single responsibility: fetch and return the raw service respo
 
 **Error toast lives in the query/mutation hook, not in whatever page calls it.** Every consumer of a given query/mutation wants the same generic failure toast — centralize it in the hook (`onError` for mutations; a `useEffect` watching `isError` for queries, since `useQuery` has no hook-level `onError`). A caller can still pass its own page-specific `onError` at call time for extra follow-up — both fire, hook-level first.
 
-The error response shape should follow `docs/04_Especificacao_BackEnd_API.md` §6.3 once the backend exists (`code`, `message`, optional `fieldErrors`, `correlationId`) — destructure it directly in the catch/error callback rather than reading it via optional chaining on a loosely-typed `error`; a malformed error response is itself worth surfacing, not silently swallowed behind `undefined`.
+The error response shape follows `docs/04_Especificacao_BackEnd_API.md` §6.3 (`code`, `message`, optional `fieldErrors`, `correlationId`) — this is already what `apps/api`'s error/404 middleware returns, confirmed working. Destructure it directly in the catch/error callback rather than reading it via optional chaining on a loosely-typed `error`; a malformed error response is itself worth surfacing, not silently swallowed behind `undefined`.
 
 **Paginated listings should default to a single, centralized page size constant** (e.g. `DEFAULT_PAGE_SIZE` in `apps/web/src/constants/pagination.ts`), matching `BE-009`/`RN-027` (listings are paginated and filterable) — pick the actual value when the first paginated listing is built; don't guess one now.
 
 ## Auth & state
 
-Per "Reconciling with the academic spec" above, this project follows **SEG-002 (DOC-07)**: session state lives in an **HttpOnly cookie** set by the backend, not in any client-JS-readable storage. This supersedes an earlier, now-retired agreement to use `sessionStorage` for the auth token. No backend/auth exists yet — this section describes the target, to apply once it's built:
+Per "Reconciling with the academic spec" above, this project follows **SEG-002 (DOC-07)**: session state lives in an **HttpOnly cookie** set by the backend, not in any client-JS-readable storage. This supersedes an earlier, now-retired agreement to use `sessionStorage` for the auth token. No auth endpoint exists yet (`apps/api`'s infrastructure is built, but it has no domain endpoints — see Architecture: backend above) — this section describes the target, to apply once auth is built:
 
 - The frontend never reads or stores an access token directly — it relies on the browser sending the HttpOnly cookie automatically on requests to the API (`credentials: "include"` / axios `withCredentials: true`) and reacts to 401 responses (see `docs/04_Especificacao_BackEnd_API.md` §7) by redirecting to login.
 - If CSRF protection is needed alongside the cookie (SEG-003), that's a backend concern (double-submit token, `SameSite` policy) — the frontend just needs to send whatever token/header the backend's auth flow requires.

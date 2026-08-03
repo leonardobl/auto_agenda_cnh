@@ -1,0 +1,8 @@
+# environment variables (real secrets/tokens) — .env.example stays committed as documentation
+/.env
+/.env.local
+/.env.*.local
+
+# local SQLite database (machine-specific, created by `yarn install` / `yarn db:setup`)
+/data/*.db
+/data/*.db-*

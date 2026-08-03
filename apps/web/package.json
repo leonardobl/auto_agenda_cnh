@@ -11,8 +11,6 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "db:setup": "node scripts/setup-db.js",
-    "postinstall": "node scripts/setup-db.js",
     "test": "cypress run --component",
     "test:open": "cypress open --component"
   },

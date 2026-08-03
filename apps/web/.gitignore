@@ -1,13 +1,3 @@
-# environment variables (real secrets/tokens) — .env.example stays committed as documentation
-# (also covered by the repo-wide rule at the root .gitignore; listed here too for local clarity)
-/.env
-/.env.local
-/.env.*.local
-
-# local SQLite database (machine-specific, created by `yarn install` / `yarn db:setup`)
-/data/*.db
-/data/*.db-*
-
 # Cypress run artifacts (screenshots/videos/downloads from local or CI runs)
 /cypress/screenshots
 /cypress/videos
