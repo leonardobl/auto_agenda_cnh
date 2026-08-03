@@ -2,6 +2,17 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-08-03
+
+### Adicionado
+
+- Back-end inicial (`apps/api`): servidor Express, health checks (liveness/readiness), tratamento de erros centralizado e validação obrigatória de variáveis de ambiente na inicialização.
+- TypeScript no back-end (antes era JavaScript puro), por consistência com o front-end.
+
+### Alterado
+
+- Banco de dados SQLite migrado de `apps/web` para `apps/api` — o front-end não cria nem acessa mais o banco diretamente.
+
 ## 2026-08-02
 
 ### Adicionado
