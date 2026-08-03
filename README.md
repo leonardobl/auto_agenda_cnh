@@ -8,7 +8,7 @@ Monorepo (Yarn workspaces):
 
 ```
 apps/web/            # front-end (React/Vite) — implementado
-apps/api/             # back-end (Node.js/Express) — implementado (só infraestrutura, sem endpoints de domínio ainda)
+apps/api/             # back-end (Node.js/Express) — implementado (infraestrutura + autenticação: login/logout/perfil)
 packages/contracts/   # schemas/tipos compartilhados entre web e api — ainda não implementado
 docs/                 # especificação acadêmica (DOC-00 a DOC-10)
 infra/                # configuração de deploy/Docker — ainda não implementado
@@ -40,7 +40,7 @@ infra/                # configuração de deploy/Docker — ainda não implement
    ```bash
    yarn install
    ```
-   Isso instala as dependências de todos os pacotes do monorepo e já cria/configura automaticamente o banco SQLite local em `apps/api/data/app.db` (script `postinstall` de `apps/api`, ver `apps/api/scripts/setup-db.ts`). Não é necessário nenhum serviço externo. Para recriar/verificar o banco manualmente:
+   Isso instala as dependências de todos os pacotes do monorepo e já cria/configura automaticamente o banco SQLite local em `apps/api/data/app.db` (script `postinstall` de `apps/api`, ver `apps/api/scripts/setup-db.ts`): aplica as migrations versionadas em `apps/api/src/database/migrations/` e semeia um usuário de demonstração (ver abaixo). Não é necessário nenhum serviço externo. Para recriar/verificar o banco manualmente (idempotente — seguro rodar de novo):
    ```bash
    yarn workspace @auto-agenda-cnh/api db:setup
    ```
@@ -56,6 +56,21 @@ infra/                # configuração de deploy/Docker — ainda não implement
    | `DB_PATH` | Não | Sobrescreve o caminho do arquivo SQLite (padrão: `data/app.db`). |
 
    O servidor recusa iniciar (fail-fast) se `NODE_ENV`, `PORT` ou `APP_ORIGIN` estiverem ausentes ou inválidos.
+3. Copie o arquivo de variáveis de ambiente de exemplo do front-end e ajuste se necessário:
+   ```bash
+   cp apps/web/.env.example apps/web/.env
+   ```
+   | Variável | Obrigatória | Descrição |
+   |---|---|---|
+   | `VITE_API_BASE_URL` | Sim | URL base da API (`apps/api`) que o front-end consome. |
+
+### Login de demonstração
+
+O seed cria um usuário fictício para testar o login sem precisar inserir dados manualmente no banco:
+
+| E-mail | Senha | Perfil |
+|---|---|---|
+| `admin@autoagenda.local` | `Demo@123` | `ADMIN` |
 
 ## Comandos
 
@@ -84,6 +99,17 @@ Com a API rodando (`yarn workspace @auto-agenda-cnh/api dev`), verifique com:
 ```bash
 curl http://localhost:3333/health      # liveness
 curl http://localhost:3333/health/db   # readiness (banco de dados)
+
+# Login com o usuário de demonstração (ver acima) — retorna um token de sessão
+curl -X POST http://localhost:3333/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@autoagenda.local","password":"Demo@123"}'
+
+# Perfil do usuário autenticado (substitua <token> pelo token retornado acima)
+curl http://localhost:3333/me -H 'Authorization: Bearer <token>'
+
+# Encerra a sessão
+curl -X POST http://localhost:3333/auth/logout -H 'Authorization: Bearer <token>'
 ```
 
 ## Documentação

@@ -22,13 +22,13 @@ When instructions from different sources could apply to the same task, resolve i
 
 ## Project state
 
-This is a Yarn workspaces monorepo for **AutoAgenda**. `apps/web` (Vite + React 19 + TypeScript + TailwindCSS) has a working shell (routing, providers, per-profile navigation) and auth screens (login/forgot/reset — UI only, submission stubbed). `apps/api` (Node.js/Express) has its infrastructure bootstrapped (server, middleware, health checks, SQLite connection) but no domain endpoints yet — nothing in `apps/web` calls it for real yet. `packages/contracts` (shared schemas/types) is still an empty placeholder. The sections below define the target architecture/conventions to build *toward* as real features land.
+This is a Yarn workspaces monorepo for **AutoAgenda**. `apps/web` (Vite + React 19 + TypeScript + TailwindCSS) has a working shell (routing, providers, per-profile navigation) and a real, working login flow (forgot/reset password screens remain UI-only, submission stubbed). `apps/api` (Node.js/Express) has its infrastructure (server, middleware, health checks, SQLite connection) plus its first domain feature: authentication (`POST /auth/login`, `POST /auth/logout`, `GET /me`) with a versioned migrations mechanism and a seeded demo user. `packages/contracts` (shared schemas/types) is still an empty placeholder. The sections below define the target architecture/conventions to build *toward* as further features land.
 
 ## Repository structure
 
 ```
 apps/web/            # React/Vite frontend — implemented, see Target stack
-apps/api/             # Node.js/Express backend — infrastructure implemented, no domain endpoints yet
+apps/api/             # Node.js/Express backend — infrastructure implemented; first domain feature (auth) implemented
 packages/contracts/   # Shared schemas/types between web and api — placeholder only
 docs/                 # Academic specification set (DOC-00…DOC-10) — source of truth, see docs/README.md
 infra/                # Docker/deployment config — placeholder, not built yet
@@ -43,7 +43,7 @@ Root `package.json` only declares the Yarn workspaces (`apps/*`, `packages/*`) �
 
 - **Database: local SQLite, not PostgreSQL.** DOC-04 §1, DOC-05 §1, and DOC-09 §4/§7 all specify PostgreSQL. This project keeps the already-working local SQLite setup (`node:sqlite`, see Local database below) instead. If/when this gets confirmed to need to change, treat it as a real migration (schema, queries, `DATABASE_URL`), not a config toggle.
 - **Backend: TypeScript, not plain JavaScript.** DOC-04 §1 says "Node.js LTS com Express e JavaScript ES Modules." `apps/api` uses TypeScript instead, for consistency with `apps/web` (also TypeScript) and the type-safety that implies. Runs natively on Node ≥22.5 via built-in type-stripping — no bundler/compiler needed at runtime, `tsc --noEmit` is a type-check-only CI gate (see Architecture: backend below).
-- **Auth/session: HttpOnly cookie, not client-readable storage.** SEG-002 (DOC-07 §2) requires session state in an HttpOnly cookie and explicitly forbids an access token in `localStorage`. This supersedes an earlier project agreement to use `sessionStorage` for the auth token — that agreement is retired. See Auth & state below for what actually applies now. No auth endpoint exists yet, so this is the target for when it's built, not a description of working code.
+- **Auth/session: token in the response body + `sessionStorage`, not an HttpOnly cookie.** SEG-002 (DOC-07 §2) requires session state in an HttpOnly cookie. This is an academic project that won't reach production and isn't being evaluated on security hardening (no CSRF protection, no `Secure`/`SameSite` tuning) — the user made a deliberate, informed call to prioritize implementation/testing simplicity (no cookie jar to manage when hitting the API directly) over this specific control. `POST /auth/login` returns the session token in the JSON body; the frontend stores it in `sessionStorage` and sends it back via a header on subsequent requests. This **retires the HttpOnly-cookie agreement** that had itself superseded an even earlier `sessionStorage` agreement — see Auth & state below for what actually applies now. The session itself is still stored server-side (SQLite `session` table, opaque ID, revocable per SEG-019) — only the transport mechanism deviates from SEG-002, not the "revocable server-side session" principle.
 - **DOC-03 (front-end specification) was never supplied.** Routes, screens, and component conventions are therefore owned by this project itself rather than derived from that document — see Architecture: component structure and the front-end best-practices mandate below. Details in `docs/README.md`.
 
 Everything else in `docs/` (business rules, data dictionary shape, security requirements beyond SEG-002, test plan, etc.) is still the target to build toward — these are the only recorded deviations.
@@ -116,11 +116,11 @@ When adding a non-trivial feature, prefer creating an OpenSpec change (via `/ops
 | HTTP                   | `axios`                                                                |
 | Toasts/notifications   | `react-toastify`                                                       |
 | Testing                | Cypress component testing — see Testing conventions                    |
-| Auth/session           | Not built yet — target is HttpOnly cookie sessions, see "Reconciling with the academic spec" above |
+| Auth/session           | Implemented — token in response body + `sessionStorage`, see "Reconciling with the academic spec" above and Auth & state below |
 
 Tailwind config lives in `apps/web/tailwind.config.js` (`content` already points at `index.html` + `src/**/*.{js,ts,jsx,tsx}`) and `apps/web/postcss.config.js`; global directives (`@tailwind base/components/utilities`) live in `apps/web/src/index.css`.
 
-**`apps/api`** — infrastructure only so far, no domain endpoints:
+**`apps/api`** — infrastructure plus the auth domain feature; further domain features still to come:
 
 | Concern               | Library                                                                |
 | ---------------------- | ----------------------------------------------------------------------- |
@@ -144,21 +144,27 @@ Tailwind config lives in `apps/web/tailwind.config.js` (`content` already points
 
 `apps/api` is a Node.js/Express server living in the same repo as the frontend (see Repository structure above — **monorepo, not a separate-service split**), matching DOC-09 §1's architecture (React client, REST API, database — the browser never talks to the database directly).
 
-What exists so far (infrastructure only — see `docs/04_Especificacao_BackEnd_API.md` §2 for the fuller aspirational layout this follows):
+What exists so far (see `docs/04_Especificacao_BackEnd_API.md` §2 for the fuller aspirational layout this follows):
 
 - `src/config/env.ts` — reads and validates required env vars (`NODE_ENV`, `PORT`, `APP_ORIGIN`; `DB_PATH` optional), fails fast (process exits) if any required var is missing or invalid (BE-013).
 - `src/database/connection.ts` — opens the SQLite connection (see Local database above).
-- `src/app.ts` — the Express app: `helmet`, `cors` (restricted to `APP_ORIGIN`), JSON body parsing, health routes, 404 handler, centralized error handler.
+- `src/database/migrations/*.sql` — plain numbered SQL migrations (`0001_create_user.sql`, `0002_create_session.sql` so far), applied in filename order by `scripts/migrate.ts`, which tracks what's already applied in a `_migrations` bookkeeping table it creates itself. Not a migration framework — a small custom runner, consistent with the "plain SQL, no ORM" stance below.
+- `scripts/setup-db.ts` — wires the migration runner and the demo-user seed (`scripts/seed.ts`) together after opening the DB connection; this is what `postinstall`/`db:setup` actually runs (see Local database above).
+- `src/app.ts` — the Express app: `helmet`, `cors` (restricted to `APP_ORIGIN`), JSON body parsing, health routes, auth routes, 404 handler, centralized error handler.
 - `src/http/routes/healthRoutes.ts` — `GET /health` (liveness) and `GET /health/db` (readiness, checks the SQLite connection).
+- `src/http/routes/authRoutes.ts` + `src/http/controllers/authController.ts` — `POST /auth/login`, `POST /auth/logout` and `GET /me` (the latter two behind `requireAuth`). Backed by `src/modules/auth/authService.ts` (login/logout use-cases, the 7-day `SESSION_TTL_SECONDS` constant, SEG-005's single generic failure message for both wrong-password and no-such-user) and `src/repositories/{userRepository,sessionRepository}.ts` (plain SQL, no ORM).
+- `src/http/middlewares/requireAuth.ts` — reads `Authorization: Bearer <token>`, validates the session (including expiry) and attaches the user to `req.user` via Express `Request` type augmentation (declaration merging, same pattern `apps/web` uses for Cypress's `cy.mount` typing).
+- `src/shared/ApiError.ts` — a small `Error` subclass (`status`/`code`/`expose`) thrown by services/middlewares for expected failure cases (e.g. `401 AUTHENTICATION_REQUIRED`); `errorHandler` already read these fields generically since the `api-bootstrap` change, this is its first concrete producer.
 - `src/http/middlewares/errorHandler.ts` and `notFoundHandler.ts` — both respond with the `docs/04` §6.3 error envelope (`code`, `message`, optional `fieldErrors`, `correlationId`), never leaking stack traces (SEG-013). Unused Express handler params (e.g. `next` in an error handler) are prefixed `_` rather than dropped — Express detects middleware type by parameter *count*, so all 4 params must stay declared on an error handler even when unused.
-- `src/http/controllers/`, `src/modules/`, `src/repositories/`, `src/shared/` exist as scaffolded, empty directories (each with a short `README.md`) — ready for the first domain feature, not yet populated with one.
+- `src/modules/` holds one subfolder per domain area (`auth/` so far); further domain features add their own.
 - `src/server.ts` is the actual entrypoint: loads env, opens the DB connection, builds the app, starts listening.
 - Relative imports between `.ts` files use the literal `.ts` extension (e.g. `import { loadEnv } from './config/env.ts'`) — required by Node's native type-stripping, which resolves the real file on disk (unlike the `tsc`/bundler convention of writing `.js` for a `.ts` source). `tsconfig.json` sets `allowImportingTsExtensions` + `noEmit` to match: no bundler, `tsc --noEmit` (`yarn build`) is a type-check-only CI gate, same split `apps/web` uses between type-checking and actual bundling.
 
 Not built yet — don't assume any of this exists until it lands in its own change:
-- No domain endpoints (auth, students, instructors, vehicles, appointments) — `docs/04` §5's full endpoint list, one focused change at a time.
-- No auth/session middleware — SEG-002's HttpOnly cookie approach needs a real login endpoint to issue the cookie first.
-- No migrations tooling (BE-014) — the database has no schema/tables yet beyond what `PRAGMA journal_mode` sets.
+- No endpoints beyond auth (students, instructors, vehicles, appointments) — `docs/04` §5's full endpoint list, one focused change at a time.
+- No general authorization/RBAC middleware for other resources — `requireAuth` only identifies *who* the current user is; per-resource permission checks (e.g. "only admins can list students") arrive with each resource's own change.
+- No `POST /auth/forgot-password` / `POST /auth/reset-password` — the frontend screens exist and stay stubbed; backing them is a separate future change.
+- No CSRF protection, login rate-limiting, account lockout, or email verification — all explicitly deferred (see the archived `auth-api` change's `design.md`), not oversights.
 
 ## Front-end conventions and design consistency
 
@@ -173,7 +179,7 @@ DOC-03 (which would otherwise define front-end routes, screens, and component co
 
 Required variables are declared in each package's own `.env.example` (committed) — copy it to that package's `.env` (gitignored, never committed) and fill in real values. Vite only exposes vars prefixed `VITE_` to client code; `apps/api` (Node-side) reads any env var directly and fails fast at startup if a required one is missing/invalid (see Architecture: backend above).
 
-- `apps/web` currently has **no required variables** at all (nothing has needed one since the SQLite setup moved to `apps/api` — see Local database above).
+- `apps/web` currently requires `VITE_API_BASE_URL` (the base URL of `apps/api`, consumed by the axios instance in `apps/web/src/Apis/api.ts`) — its first required variable, added alongside the auth integration.
 - `apps/api` currently requires `NODE_ENV`, `PORT`, `APP_ORIGIN`; `DB_PATH` is optional (defaults to `data/app.db`).
 
 **Whenever a new required env var is introduced, add it to the relevant package's `.env.example` (with an empty/placeholder value, never a real secret) in the same change**, and update the table in [README.md](README.md#configuração) — that's what a new setup follows, not this file.
@@ -226,7 +232,7 @@ navigate(destino);
 
 ## Data & server state
 
-Once `apps/api` has a real endpoint to call (its infrastructure exists — see Architecture: backend above — but no domain endpoints yet), put services in `apps/web/src/services/` as static-method classes, calling through an axios instance in `apps/web/src/Apis/` (driven by an env var for the API's base URL).
+`apps/api` now has real endpoints to call (auth so far — see Architecture: backend above); services live in `apps/web/src/services/` as static-method classes (e.g. `AuthService`), calling through the shared axios instance in `apps/web/src/Apis/api.ts` (driven by the `VITE_API_BASE_URL` env var).
 
 **Every request — query or mutation — goes through a React Query hook.** Never call a service method directly from a component or page-level hook, and never reach for a raw `useEffect` + `useState` fetch, even for a one-off call. Service-backed query hooks live in `apps/web/src/hooks/queries/<domain>/use<Name>/`, one folder per domain — kept separate from component/template hooks (`use[Template]`), which stay co-located with the component.
 
@@ -243,12 +249,12 @@ The error response shape follows `docs/04_Especificacao_BackEnd_API.md` §6.3 (`
 
 ## Auth & state
 
-Per "Reconciling with the academic spec" above, this project follows **SEG-002 (DOC-07)**: session state lives in an **HttpOnly cookie** set by the backend, not in any client-JS-readable storage. This supersedes an earlier, now-retired agreement to use `sessionStorage` for the auth token. No auth endpoint exists yet (`apps/api`'s infrastructure is built, but it has no domain endpoints — see Architecture: backend above) — this section describes the target, to apply once auth is built:
+Per "Reconciling with the academic spec" above, this project deliberately deviates from **SEG-002 (DOC-07)**: session state is a token returned in the login response body, stored client-side in `sessionStorage` — not an HttpOnly cookie. This is now implemented (`apps/api`'s auth endpoints, `apps/web`'s `Login` page — see Architecture: backend above):
 
-- The frontend never reads or stores an access token directly — it relies on the browser sending the HttpOnly cookie automatically on requests to the API (`credentials: "include"` / axios `withCredentials: true`) and reacts to 401 responses (see `docs/04_Especificacao_BackEnd_API.md` §7) by redirecting to login.
-- If CSRF protection is needed alongside the cookie (SEG-003), that's a backend concern (double-submit token, `SameSite` policy) — the frontend just needs to send whatever token/header the backend's auth flow requires.
+- On successful login, the returned session token is stored in `sessionStorage` (`apps/web/src/utils/sessionToken.ts` — never `localStorage`, it should not outlive the browser session) and attached to subsequent API requests via an `Authorization: Bearer` header (an axios request interceptor in `apps/web/src/Apis/api.ts`, not repeated per-call boilerplate).
+- A response interceptor in the same file reacts to 401s (see `docs/04_Especificacao_BackEnd_API.md` §7) by clearing the stored token and redirecting to `/login`.
 - For non-auth client state that only needs to survive one flow/session and doesn't need to survive a page reload, prefer an in-memory React Context over any Web Storage.
-- **Centralize role/permission checks in one hook** (e.g. `useUserPermissions.ts` exposing `hasRole`, `isAdmin`, `hasPermission`, etc., mirroring the profile matrix in `docs/07_Seguranca_Privacidade_Auditoria.md` §3) instead of re-deriving the same check inline in every component that needs it. Search for an existing hook/util before writing a fresh inline check for any repeated concern (permissions, formatting, validation).
+- **Centralize role/permission checks in one hook** (e.g. `useUserPermissions.ts` exposing `hasRole`, `isAdmin`, `hasPermission`, etc., mirroring the profile matrix in `docs/07_Seguranca_Privacidade_Auditoria.md` §3) instead of re-deriving the same check inline in every component that needs it — not built yet, the `Login` page currently does one inline role→route lookup for its own post-login redirect; build the shared hook once a second consumer needs role/permission checks rather than extracting it speculatively now. Search for an existing hook/util before writing a fresh inline check for any repeated concern (permissions, formatting, validation).
 - For data that needs to survive across steps of a multi-step flow (e.g. the scheduling wizard), prefer a React Context whose `Provider` wraps only the relevant route subtree — never an app-wide provider that stays mounted across unrelated areas. Context state lives only in memory, so it never touches disk.
 - If a storage hook is ever added and named `useSessionStorage`/`useLocalStorage`, it must actually wrap the storage type its name says — a mismatch is a bug worth fixing at the source, not a pattern to replicate.
 
@@ -256,8 +262,8 @@ Per "Reconciling with the academic spec" above, this project follows **SEG-002 (
 
 This app handles personal data regulated by Brazil's LGPD (Lei Geral de Proteção de Dados) — student/instructor name, CPF-equivalent document, email, phone, and vehicle data (see `docs/05_Banco_de_Dados_Dicionario.md` for the exact fields) and DOC-07's privacy/security requirements more broadly. Keep this in mind whenever a task touches user data, not just when it's called out explicitly.
 
-- **Never persist personal/sensitive data client-side** — not in `sessionStorage`, not in `localStorage` (which shouldn't be used for anything, see Auth & state), not even transiently beyond what a single render cycle needs. The auth/session cookie itself is HttpOnly and therefore not something frontend code ever touches directly.
-- If a flow genuinely needs an identifier to survive across steps (e.g. a selected student's UUID between wizard steps), an opaque ID in `sessionStorage` — removed immediately once consumed — is an acceptable, narrow exception. Full personal-data objects are not; use a scoped React Context (see Auth & state) for those instead.
+- **Never persist personal/sensitive data client-side** — not in `sessionStorage`, not in `localStorage` (which shouldn't be used for anything, see Auth & state), not even transiently beyond what a single render cycle needs. The session token itself (an opaque identifier, not personal data) is the one deliberate exception — see Auth & state above for why this project stores it in `sessionStorage` instead of an HttpOnly cookie.
+- If a flow genuinely needs an identifier to survive across steps (e.g. a selected student's UUID between wizard steps), an opaque ID in `sessionStorage` — removed immediately once consumed — is an acceptable, narrow exception, same reasoning as the session token above. Full personal-data objects are not; use a scoped React Context (see Auth & state) for those instead.
 - **Don't log full personal-data payloads** to `console.*` or any external service — pass status codes or generic messages, not raw sensitive fields (SEG-012).
 - Mask document/contact fields in listings when the full value isn't needed for the task at hand (DOC-07 §4).
 - If you spot personal data already sitting somewhere it shouldn't (e.g. `localStorage`), flag it to the user rather than silently rewriting unrelated code.

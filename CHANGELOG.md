@@ -8,6 +8,9 @@ Todas as mudanças relevantes deste projeto são documentadas neste arquivo, org
 
 - Back-end inicial (`apps/api`): servidor Express, health checks (liveness/readiness), tratamento de erros centralizado e validação obrigatória de variáveis de ambiente na inicialização.
 - TypeScript no back-end (antes era JavaScript puro), por consistência com o front-end.
+- Autenticação de verdade (`POST /auth/login`, `POST /auth/logout`, `GET /me`): sessão em token retornado no corpo da resposta, guardado no `sessionStorage` do front-end e enviado via cabeçalho `Authorization`.
+- Mecanismo de migrations versionadas do banco de dados (tabelas `user` e `session`) e um usuário de demonstração semeado automaticamente (`admin@autoagenda.local`), documentado no `README.md`.
+- Tela de login integrada ao back-end de verdade (antes só exibia um aviso de "em breve"), com redirecionamento para a área do perfil autenticado.
 
 ### Alterado
 
