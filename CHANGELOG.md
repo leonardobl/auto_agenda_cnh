@@ -2,6 +2,15 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-08-04
+
+### Adicionado
+
+- Gestão de alunos (`apps/api`): cadastrar, listar (com paginação, busca e filtro por status), consultar, editar e inativar alunos (`/students`), restrito ao perfil Admin.
+- Categorias de CNH (A, B, AB, C, D, E) semeadas automaticamente e consultáveis via `/license-categories`, usadas no cadastro de aluno.
+- Cinco alunos fictícios semeados automaticamente para demonstração.
+- Tela real de Admin > Alunos: listagem, cadastro e edição em modal, e inativação com confirmação.
+
 ## 2026-08-03
 
 ### Adicionado

@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import type { DatabaseSync } from 'node:sqlite'
 import { healthRoutes } from './http/routes/healthRoutes.ts'
 import { authRoutes } from './http/routes/authRoutes.ts'
+import { studentRoutes } from './http/routes/studentRoutes.ts'
 import { notFoundHandler } from './http/middlewares/notFoundHandler.ts'
 import { errorHandler } from './http/middlewares/errorHandler.ts'
 
@@ -21,6 +22,7 @@ export function createApp({ appOrigin, db }: CreateAppOptions): Express {
 
   app.use(healthRoutes({ db }))
   app.use(authRoutes({ db }))
+  app.use(studentRoutes({ db }))
 
   app.use(notFoundHandler)
   app.use(errorHandler)
