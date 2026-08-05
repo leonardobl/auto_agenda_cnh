@@ -50,3 +50,40 @@ export function seedDemoStudents(db: DatabaseSync): void {
 
   console.log(`Seeded ${DEMO_STUDENTS.length} demo students`)
 }
+
+const DEMO_VEHICLES = [
+  { plate: 'ABC1D23', brand: 'Volkswagen', model: 'Gol', year: 2020, categoryCode: 'B', status: 'ACTIVE' },
+  { plate: 'DEF4E56', brand: 'Honda', model: 'CG 160', year: 2022, categoryCode: 'A', status: 'ACTIVE' },
+  {
+    plate: 'GHI7F89',
+    brand: 'Chevrolet',
+    model: 'Onix',
+    year: 2019,
+    categoryCode: 'B',
+    status: 'MAINTENANCE',
+  },
+] as const
+
+export function seedDemoVehicles(db: DatabaseSync): void {
+  const existing = db.prepare('SELECT id FROM vehicle LIMIT 1').get()
+  if (existing) return
+
+  const categoryByCode = new Map(
+    (db.prepare('SELECT id, code FROM license_category').all() as { id: string; code: string }[]).map(
+      (category) => [category.code, category.id],
+    ),
+  )
+
+  const insert = db.prepare(
+    `INSERT INTO vehicle (id, plate, brand, model, year, category_id, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  )
+
+  for (const vehicle of DEMO_VEHICLES) {
+    const categoryId = categoryByCode.get(vehicle.categoryCode)
+    if (!categoryId) continue
+    insert.run(randomUUID(), vehicle.plate, vehicle.brand, vehicle.model, vehicle.year, categoryId, vehicle.status)
+  }
+
+  console.log(`Seeded ${DEMO_VEHICLES.length} demo vehicles`)
+}

@@ -8,7 +8,7 @@ Monorepo (Yarn workspaces):
 
 ```
 apps/web/            # front-end (React/Vite) — implementado
-apps/api/             # back-end (Node.js/Express) — implementado (infraestrutura, autenticação e gestão de alunos)
+apps/api/             # back-end (Node.js/Express) — implementado (infraestrutura, autenticação, alunos e veículos)
 packages/contracts/   # schemas/tipos compartilhados entre web e api — ainda não implementado
 docs/                 # especificação acadêmica (DOC-00 a DOC-10)
 infra/                # configuração de deploy/Docker — ainda não implementado
@@ -72,7 +72,7 @@ O seed cria um usuário fictício para testar o login sem precisar inserir dados
 |---|---|---|
 | `admin@autoagenda.local` | `Demo@123` | `ADMIN` |
 
-O seed também cadastra cinco alunos fictícios (visíveis em Admin > Alunos após o login) e as seis categorias de CNH (A, B, AB, C, D, E), usadas no seletor de categoria do cadastro de aluno.
+O seed também cadastra cinco alunos fictícios (visíveis em Admin > Alunos após o login), três veículos fictícios — um deles em manutenção (visíveis em Admin > Veículos) — e as seis categorias de CNH (A, B, AB, C, D, E), usadas nos seletores de categoria dos cadastros.
 
 ## Comandos
 

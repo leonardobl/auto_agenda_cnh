@@ -2,6 +2,14 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-08-05
+
+### Adicionado
+
+- Gestão de veículos (`apps/api`): cadastrar, listar (com paginação, busca e filtro por status), consultar e editar veículos (`/vehicles`), restrito ao perfil Admin. Diferente de alunos, o status (Ativo/Manutenção/Inativo) é alterado diretamente pela edição, sem ação separada de inativação.
+- Três veículos fictícios semeados automaticamente para demonstração, um deles em manutenção.
+- Tela real de Admin > Veículos: listagem, cadastro e edição em modal.
+
 ## 2026-08-04
 
 ### Adicionado
