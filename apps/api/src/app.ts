@@ -6,6 +6,7 @@ import { healthRoutes } from './http/routes/healthRoutes.ts'
 import { authRoutes } from './http/routes/authRoutes.ts'
 import { studentRoutes } from './http/routes/studentRoutes.ts'
 import { vehicleRoutes } from './http/routes/vehicleRoutes.ts'
+import { instructorRoutes } from './http/routes/instructorRoutes.ts'
 import { notFoundHandler } from './http/middlewares/notFoundHandler.ts'
 import { errorHandler } from './http/middlewares/errorHandler.ts'
 
@@ -25,6 +26,7 @@ export function createApp({ appOrigin, db }: CreateAppOptions): Express {
   app.use(authRoutes({ db }))
   app.use(studentRoutes({ db }))
   app.use(vehicleRoutes({ db }))
+  app.use(instructorRoutes({ db }))
 
   app.use(notFoundHandler)
   app.use(errorHandler)

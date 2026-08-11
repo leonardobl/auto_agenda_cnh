@@ -87,3 +87,51 @@ export function seedDemoVehicles(db: DatabaseSync): void {
 
   console.log(`Seeded ${DEMO_VEHICLES.length} demo vehicles`)
 }
+
+export const DEMO_INSTRUCTOR_PASSWORD = 'Demo@123'
+
+const DEMO_INSTRUCTORS = [
+  {
+    email: 'instrutor1@autoagenda.local',
+    fullName: 'Fábio Ramos Teixeira',
+    document: '98765432101',
+    credentialNumber: 'CRED-0001',
+    phone: '(11) 93456-7801',
+  },
+  {
+    email: 'instrutor2@autoagenda.local',
+    fullName: 'Juliana Castro Mendes',
+    document: '98765432102',
+    credentialNumber: 'CRED-0002',
+    phone: '(11) 93456-7802',
+  },
+] as const
+
+export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
+  const existing = db.prepare('SELECT id FROM instructor LIMIT 1').get()
+  if (existing) return
+
+  for (const instructor of DEMO_INSTRUCTORS) {
+    const passwordHash = await hashPassword(DEMO_INSTRUCTOR_PASSWORD)
+    const userId = randomUUID()
+
+    db.prepare(
+      `INSERT INTO user (id, email, password_hash, role, status)
+       VALUES (?, ?, ?, 'INSTRUCTOR', 'ACTIVE')`,
+    ).run(userId, instructor.email, passwordHash)
+
+    db.prepare(
+      `INSERT INTO instructor (id, user_id, full_name, document, credential_number, phone, status)
+       VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')`,
+    ).run(
+      randomUUID(),
+      userId,
+      instructor.fullName,
+      instructor.document,
+      instructor.credentialNumber,
+      instructor.phone,
+    )
+  }
+
+  console.log(`Seeded ${DEMO_INSTRUCTORS.length} demo instructors`)
+}

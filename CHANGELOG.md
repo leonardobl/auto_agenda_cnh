@@ -2,6 +2,14 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-08-11
+
+### Adicionado
+
+- Gestão de instrutores (`apps/api`): cadastrar (cria conta de login e perfil juntos, numa operação atômica), listar (com paginação, busca e filtro por status), consultar e editar instrutores (`/instructors`), restrito ao perfil Admin.
+- Dois instrutores fictícios semeados automaticamente para demonstração, cada um com sua própria conta de login.
+- Tela real de Admin > Instrutores: listagem (com e-mail vinculado), cadastro e edição em modal.
+
 ## 2026-08-05
 
 ### Adicionado
