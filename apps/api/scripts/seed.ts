@@ -1,6 +1,11 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { randomUUID } from 'node:crypto'
 import { hashPassword } from '../src/shared/passwordHash.ts'
+import { createStudentRepository } from '../src/repositories/studentRepository.ts'
+import { createInstructorRepository } from '../src/repositories/instructorRepository.ts'
+import { createVehicleRepository } from '../src/repositories/vehicleRepository.ts'
+import { createAppointmentRepository } from '../src/repositories/appointmentRepository.ts'
+import { createAppointmentService } from '../src/modules/appointments/appointmentService.ts'
 
 export const DEMO_USER_EMAIL = 'admin@autoagenda.local'
 export const DEMO_USER_PASSWORD = 'Demo@123'
@@ -134,4 +139,56 @@ export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
   }
 
   console.log(`Seeded ${DEMO_INSTRUCTORS.length} demo instructors`)
+}
+
+export function seedDemoAppointments(db: DatabaseSync): void {
+  const existing = db.prepare('SELECT id FROM appointment LIMIT 1').get()
+  if (existing) return
+
+  const admin = db.prepare('SELECT id FROM user WHERE email = ?').get(DEMO_USER_EMAIL) as
+    | { id: string }
+    | undefined
+  const student = db.prepare('SELECT id, category_id FROM student WHERE document = ?').get('12345678901') as
+    | { id: string; category_id: string }
+    | undefined
+  const instructor = db
+    .prepare('SELECT id FROM instructor WHERE credential_number = ?')
+    .get('CRED-0001') as { id: string } | undefined
+  const vehicle = db.prepare('SELECT id FROM vehicle WHERE plate = ?').get('ABC1D23') as
+    | { id: string }
+    | undefined
+
+  if (!admin || !student || !instructor || !vehicle) return
+
+  // Books through the real appointmentService.book() path (same validation as the
+  // API), rather than a raw insert — cheap extra confidence that the scheduling
+  // algorithm actually works end to end.
+  const appointmentService = createAppointmentService({
+    db,
+    appointmentRepository: createAppointmentRepository(db),
+    studentRepository: createStudentRepository(db),
+    instructorRepository: createInstructorRepository(db),
+    vehicleRepository: createVehicleRepository(db),
+  })
+
+  const startAt = new Date()
+  startAt.setUTCDate(startAt.getUTCDate() + 3)
+  startAt.setUTCHours(10, 0, 0, 0)
+
+  try {
+    appointmentService.book(
+      {
+        studentId: student.id,
+        instructorId: instructor.id,
+        vehicleId: vehicle.id,
+        categoryId: student.category_id,
+        startAt: startAt.toISOString(),
+        durationMinutes: 50,
+      },
+      admin.id,
+    )
+    console.log('Seeded 1 demo appointment')
+  } catch (error) {
+    console.error('Failed to seed demo appointment:', error)
+  }
 }

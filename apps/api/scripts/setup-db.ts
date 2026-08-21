@@ -3,7 +3,13 @@ import { mkdirSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runMigrations } from './migrate.ts'
-import { seedDemoUser, seedDemoStudents, seedDemoVehicles, seedDemoInstructors } from './seed.ts'
+import {
+  seedDemoUser,
+  seedDemoStudents,
+  seedDemoVehicles,
+  seedDemoInstructors,
+  seedDemoAppointments,
+} from './seed.ts'
 
 const DB_PATH = process.env.DB_PATH || 'data/app.db'
 const MIGRATIONS_DIR = join(
@@ -23,6 +29,7 @@ await seedDemoUser(db)
 seedDemoStudents(db)
 seedDemoVehicles(db)
 await seedDemoInstructors(db)
+seedDemoAppointments(db)
 
 db.close()
 

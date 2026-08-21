@@ -2,13 +2,17 @@
 
 Aplicação web para agendamento de aulas práticas de autoescola (CNH) — projeto acadêmico (Projeto Integrador II). Especificação completa em [docs/](docs/).
 
+## Sobre o escopo deste projeto
+
+Este é um entregável acadêmico, não um produto em produção — o objetivo é demonstrar entendimento dos requisitos e um funcionamento real das partes centrais, não implementar 100% do que a especificação (`docs/`) descreve. Algumas peças de apoio são deliberadamente simplificadas ou fixadas em código (ex.: configurações de horário/duração/antecedência do agendamento são constantes no código, não uma tela administrativa) em vez de ganharem CRUD/tela próprios — cada decisão desse tipo fica registrada no `design.md` da change correspondente (arquivado em `openspec/changes/archive/`, fora do controle de versão) e, quando relevante para quem só olha o código, também aqui e em [CLAUDE.md](CLAUDE.md). O critério é sempre o mesmo: o que está implementado deve funcionar de verdade (login, cadastros, o motor de agendamento), mesmo que nem toda tela/fluxo secundário da especificação exista.
+
 ## Estrutura do repositório
 
 Monorepo (Yarn workspaces):
 
 ```
 apps/web/            # front-end (React/Vite) — implementado
-apps/api/             # back-end (Node.js/Express) — implementado (infraestrutura, autenticação, alunos, veículos e instrutores)
+apps/api/             # back-end (Node.js/Express) — implementado (infraestrutura, autenticação, alunos, veículos, instrutores e agendamento)
 packages/contracts/   # schemas/tipos compartilhados entre web e api — ainda não implementado
 docs/                 # especificação acadêmica (DOC-00 a DOC-10)
 infra/                # configuração de deploy/Docker — ainda não implementado
@@ -78,6 +82,12 @@ O seed também cadastra cinco alunos fictícios (visíveis em Admin > Alunos ap�
 |---|---|---|
 | `instrutor1@autoagenda.local` | `Demo@123` | `INSTRUCTOR` |
 | `instrutor2@autoagenda.local` | `Demo@123` | `INSTRUCTOR` |
+
+Uma aula de demonstração já vem agendada (Ana Beatriz Souza / Fábio Ramos Teixeira / ABC1D23), visível em Admin > Agenda.
+
+### Testando o agendamento (Admin > Agenda)
+
+Depois de logar como Admin, acesse **Agenda** no menu: selecione um aluno (a categoria é preenchida automaticamente a partir do cadastro dele), ajuste o período e a duração, clique em **Buscar horários** e depois em **Reservar** em qualquer horário da lista — a busca já considera horário de funcionamento, antecedência mínima e conflitos reais de aluno/instrutor/veículo. Configurações como horário de funcionamento e antecedência são constantes fixas no back-end (`apps/api/src/modules/appointments/appointmentService.ts`) nesta versão, não uma tela administrativa — ver "Sobre o escopo deste projeto" acima.
 
 ## Comandos
 

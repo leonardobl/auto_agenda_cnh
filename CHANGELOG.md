@@ -2,6 +2,15 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-08-21
+
+### Adicionado
+
+- Agendamento de aulas (`apps/api`): buscar horários disponíveis e reservar uma aula (`GET /availability/slots`, `POST /appointments`, `GET /appointments`), restrito ao perfil Admin, com detecção real de conflito de horário para aluno, instrutor e veículo.
+- Uma aula fictícia semeada automaticamente para demonstração.
+- Tela real de Admin > Agenda: busca de horários disponíveis (com categoria preenchida automaticamente a partir do aluno selecionado), reserva e listagem das aulas já agendadas.
+- Documento `CHECKLIST.md` com a visão geral do que já foi implementado por perfil (Aluno/Instrutor/Administrador) e do que ainda falta.
+
 ## 2026-08-11
 
 ### Adicionado
