@@ -44,6 +44,7 @@ export interface InstructorRepository {
   findMany(params: FindManyParams): InstructorRecord[]
   count(filters: InstructorFilters): number
   findById(id: string): InstructorRecord | undefined
+  findByUserId(userId: string): InstructorRecord | undefined
   create(input: CreateInstructorInput): InstructorRecord
   update(id: string, input: UpdateInstructorInput): InstructorRecord | undefined
 }
@@ -97,6 +98,12 @@ export function createInstructorRepository(db: DatabaseSync): InstructorReposito
     },
 
     findById,
+
+    findByUserId(userId) {
+      return db
+        .prepare(`${SELECT_WITH_EMAIL} WHERE instructor.user_id = ?`)
+        .get(userId) as InstructorRecord | undefined
+    },
 
     create({ id, userId, fullName, document, credentialNumber, phone }) {
       db.prepare(

@@ -57,10 +57,15 @@ export interface ListAppointmentsParams {
   pageSize?: unknown
 }
 
+export interface Requester {
+  role: string
+  userId: string
+}
+
 export interface AppointmentService {
   searchSlots(params: SearchSlotsParams): AvailableSlot[]
   book(params: BookAppointmentParams, createdBy: string): AppointmentRecord
-  list(params: ListAppointmentsParams): AppointmentListResult
+  list(params: ListAppointmentsParams, requester: Requester): AppointmentListResult
 }
 
 interface AppointmentServiceDeps {
@@ -292,12 +297,21 @@ export function createAppointmentService({
       }
     },
 
-    list({ page, pageSize }) {
+    list({ page, pageSize }, requester) {
       const parsedPage = parsePage(page)
       const parsedPageSize = parsePageSize(pageSize)
 
-      const items = appointmentRepository.findMany({ page: parsedPage, pageSize: parsedPageSize })
-      const total = appointmentRepository.count()
+      let instructorId: string | undefined
+      if (requester.role === 'INSTRUCTOR') {
+        const instructor = instructorRepository.findByUserId(requester.userId)
+        if (!instructor) {
+          return { items: [], page: parsedPage, pageSize: parsedPageSize, total: 0 }
+        }
+        instructorId = instructor.id
+      }
+
+      const items = appointmentRepository.findMany({ page: parsedPage, pageSize: parsedPageSize, instructorId })
+      const total = appointmentRepository.count({ instructorId })
 
       return { items, page: parsedPage, pageSize: parsedPageSize, total }
     },

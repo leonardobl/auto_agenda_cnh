@@ -23,7 +23,7 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 
 ## Instrutor
 
-- [ ] Ver a própria agenda
+- [x] Ver a própria agenda — `instructor-schedule`. Somente leitura (sem reagendar/cancelar/confirmar); `GET /appointments` escopado por instrutor no próprio servidor, reaproveitando o mesmo endpoint do Admin
 - [ ] Disponibilidade semanal / bloqueios (deliberadamente fora de escopo — ver Non-Goals de `appointment-scheduling`)
 - [ ] Editar o próprio perfil
 

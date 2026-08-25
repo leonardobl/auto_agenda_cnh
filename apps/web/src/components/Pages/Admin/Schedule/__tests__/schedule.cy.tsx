@@ -20,35 +20,6 @@ const CATEGORIES = [
   { id: 'cat-b', code: 'B', name: 'Automóveis' },
 ]
 
-const INSTRUCTORS = [
-  {
-    id: 'instructor-1',
-    user_id: 'user-1',
-    full_name: 'Fábio Instrutor',
-    document: null,
-    credential_number: 'CRED-0001',
-    phone: '(11) 90000-0001',
-    status: 'ACTIVE',
-    created_at: '2026-01-01 00:00:00',
-    updated_at: '2026-01-01 00:00:00',
-    email: 'fabio@autoagenda.local',
-  },
-]
-
-const VEHICLES = [
-  {
-    id: 'vehicle-1',
-    plate: 'ABC1D23',
-    brand: 'Volkswagen',
-    model: 'Gol',
-    year: 2020,
-    category_id: 'cat-b',
-    status: 'ACTIVE',
-    created_at: '2026-01-01 00:00:00',
-    updated_at: '2026-01-01 00:00:00',
-  },
-]
-
 const APPOINTMENTS = [
   {
     id: 'appointment-1',
@@ -64,6 +35,9 @@ const APPOINTMENTS = [
     created_by: 'admin-1',
     created_at: '2026-01-01 00:00:00',
     updated_at: '2026-01-01 00:00:00',
+    student_full_name: 'Ana Teste',
+    instructor_full_name: 'Fábio Instrutor',
+    vehicle_plate: 'ABC1D23',
   },
 ]
 
@@ -74,14 +48,6 @@ describe('Schedule (Administrador)', () => {
       body: { items: STUDENTS, page: 1, pageSize: 100, total: 1 },
     }).as('listStudents')
     cy.intercept('GET', '**/license-categories', { statusCode: 200, body: CATEGORIES }).as('categories')
-    cy.intercept('GET', '**/instructors*', {
-      statusCode: 200,
-      body: { items: INSTRUCTORS, page: 1, pageSize: 100, total: 1 },
-    }).as('listInstructors')
-    cy.intercept('GET', '**/vehicles*', {
-      statusCode: 200,
-      body: { items: VEHICLES, page: 1, pageSize: 100, total: 1 },
-    }).as('listVehicles')
     cy.intercept('GET', '**/appointments*', {
       statusCode: 200,
       body: { items: APPOINTMENTS, page: 1, pageSize: 10, total: 1 },

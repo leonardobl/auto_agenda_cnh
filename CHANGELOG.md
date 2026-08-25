@@ -2,6 +2,17 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-08-25
+
+### Adicionado
+
+- Agenda própria do instrutor (`apps/web`, Instrutor > Minha agenda): cada instrutor logado vê somente as próprias aulas agendadas — primeiro fluxo autenticado fora do perfil Administrador.
+
+### Alterado
+
+- `GET /appointments` (`apps/api`) agora aceita também o perfil Instrutor, retornando apenas as aulas do próprio instrutor autenticado; a listagem passou a incluir os nomes de aluno, instrutor e veículo diretamente na resposta.
+- Tela de Admin > Agenda simplificada para usar os nomes já vindos da API, removendo buscas extras que só existiam para resolver esses nomes.
+
 ## 2026-08-21
 
 ### Adicionado

@@ -1,6 +1,4 @@
 import { DEFAULT_PAGE_SIZE } from '../../../../constants/pagination'
-import { useInstructors } from '../../../../hooks/queries/instructors/useInstructors'
-import { useVehicles } from '../../../../hooks/queries/vehicles/useVehicles'
 import Button from '../../../Atoms/Button'
 import SlotSearchForm from '../../../Molecules/SlotSearchForm'
 import { useSchedulePage } from './useSchedulePage'
@@ -27,13 +25,6 @@ function Schedule() {
     setPage,
     total,
   } = useSchedulePage()
-
-  const { data: instructorsResult } = useInstructors({ page: 1, pageSize: 100 })
-  const { data: vehiclesResult } = useVehicles({ page: 1, pageSize: 100 })
-
-  const studentNameById = new Map(students.map((student) => [student.id, student.full_name]))
-  const instructorNameById = new Map(instructorsResult?.items.map((instructor) => [instructor.id, instructor.full_name]))
-  const vehiclePlateById = new Map(vehiclesResult?.items.map((vehicle) => [vehicle.id, vehicle.plate]))
 
   const totalPages = Math.max(1, Math.ceil(total / DEFAULT_PAGE_SIZE))
 
@@ -111,9 +102,9 @@ function Schedule() {
                 {appointments.map((appointment) => (
                   <tr key={appointment.id} className="border-t border-solid">
                     <td className="p-2">{formatDateTime(appointment.start_at)}</td>
-                    <td className="p-2">{studentNameById.get(appointment.student_id) ?? '—'}</td>
-                    <td className="p-2">{instructorNameById.get(appointment.instructor_id) ?? '—'}</td>
-                    <td className="p-2">{vehiclePlateById.get(appointment.vehicle_id) ?? '—'}</td>
+                    <td className="p-2">{appointment.student_full_name}</td>
+                    <td className="p-2">{appointment.instructor_full_name}</td>
+                    <td className="p-2">{appointment.vehicle_plate}</td>
                     <td className="p-2">{appointment.status}</td>
                   </tr>
                 ))}

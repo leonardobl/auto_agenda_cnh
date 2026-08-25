@@ -18,7 +18,7 @@ export function createAppointmentController({ appointmentService }: AppointmentC
     },
 
     list(req: Request, res: Response) {
-      const result = appointmentService.list(req.query)
+      const result = appointmentService.list(req.query, { role: req.user!.role, userId: req.user!.id })
       res.status(200).json(result)
     },
   }

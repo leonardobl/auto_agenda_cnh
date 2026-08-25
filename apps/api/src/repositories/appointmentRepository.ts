@@ -14,6 +14,9 @@ export interface AppointmentRecord {
   created_by: string
   created_at: string
   updated_at: string
+  student_full_name: string
+  instructor_full_name: string
+  vehicle_plate: string
 }
 
 export interface CreateAppointmentInput {
@@ -27,14 +30,39 @@ export interface CreateAppointmentInput {
   createdBy: string
 }
 
+export interface FindManyParams {
+  page: number
+  pageSize: number
+  instructorId?: string
+}
+
+export interface CountParams {
+  instructorId?: string
+}
+
 export interface AppointmentRepository {
   isStudentFree(studentId: string, startAt: string, endAt: string): boolean
   isInstructorFree(instructorId: string, startAt: string, endAt: string): boolean
   isVehicleFree(vehicleId: string, startAt: string, endAt: string): boolean
   create(input: CreateAppointmentInput): AppointmentRecord
-  findMany(params: { page: number; pageSize: number }): AppointmentRecord[]
-  count(): number
+  findMany(params: FindManyParams): AppointmentRecord[]
+  count(params: CountParams): number
 }
+
+// Resolves the student/instructor/vehicle names an Instructor caller needs to make
+// sense of their own schedule — they have no access to /students or /vehicles to
+// look these up separately (both stay Admin-only), so the appointment list has to
+// carry them directly.
+const SELECT_WITH_NAMES = `
+  SELECT appointment.*,
+    student.full_name AS student_full_name,
+    instructor.full_name AS instructor_full_name,
+    vehicle.plate AS vehicle_plate
+  FROM appointment
+  JOIN student ON student.id = appointment.student_id
+  JOIN instructor ON instructor.id = appointment.instructor_id
+  JOIN vehicle ON vehicle.id = appointment.vehicle_id
+`
 
 // Every appointment created in this change stays in AGENDADA (no cancel/complete
 // actions exist yet), so every row is a "live" booking — this overlap check doesn't
@@ -58,7 +86,9 @@ function isFree(
 
 export function createAppointmentRepository(db: DatabaseSync): AppointmentRepository {
   function findById(id: string): AppointmentRecord | undefined {
-    return db.prepare('SELECT * FROM appointment WHERE id = ?').get(id) as AppointmentRecord | undefined
+    return db
+      .prepare(`${SELECT_WITH_NAMES} WHERE appointment.id = ?`)
+      .get(id) as AppointmentRecord | undefined
   }
 
   return {
@@ -82,15 +112,21 @@ export function createAppointmentRepository(db: DatabaseSync): AppointmentReposi
       return findById(id)!
     },
 
-    findMany({ page, pageSize }) {
+    findMany({ page, pageSize, instructorId }) {
       const offset = (page - 1) * pageSize
+      const where = instructorId ? 'WHERE appointment.instructor_id = ?' : ''
+      const params = instructorId ? [instructorId] : []
       return db
-        .prepare('SELECT * FROM appointment ORDER BY start_at LIMIT ? OFFSET ?')
-        .all(pageSize, offset) as unknown as AppointmentRecord[]
+        .prepare(`${SELECT_WITH_NAMES} ${where} ORDER BY appointment.start_at LIMIT ? OFFSET ?`)
+        .all(...params, pageSize, offset) as unknown as AppointmentRecord[]
     },
 
-    count() {
-      const row = db.prepare('SELECT COUNT(*) as total FROM appointment').get() as { total: number }
+    count({ instructorId }) {
+      const where = instructorId ? 'WHERE instructor_id = ?' : ''
+      const params = instructorId ? [instructorId] : []
+      const row = db
+        .prepare(`SELECT COUNT(*) as total FROM appointment ${where}`)
+        .get(...params) as { total: number }
       return row.total
     },
   }

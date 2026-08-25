@@ -14,6 +14,9 @@ export interface Appointment {
   created_by: string
   created_at: string
   updated_at: string
+  student_full_name: string
+  instructor_full_name: string
+  vehicle_plate: string
 }
 
 export interface AvailableSlot {
