@@ -2,6 +2,13 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-08-29
+
+### Adicionado
+
+- Recuperação de senha (`POST /auth/forgot-password`, `POST /auth/reset-password`): as telas "Esqueci minha senha" e "Redefinir senha" agora funcionam de ponta a ponta. Sem provedor de e-mail configurado, o link de redefinição é registrado no console da API em vez de enviado — ver README para como testar.
+- Redefinir a senha agora encerra todas as sessões ativas do usuário, exigindo login novamente.
+
 ## 2026-08-25
 
 ### Adicionado

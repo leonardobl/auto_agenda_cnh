@@ -26,4 +26,12 @@ export class AuthService {
     const { data } = await api.get<AuthUser>('/me')
     return data
   }
+
+  static async forgotPassword(email: string): Promise<void> {
+    await api.post('/auth/forgot-password', { email })
+  }
+
+  static async resetPassword(token: string, password: string): Promise<void> {
+    await api.post('/auth/reset-password', { token, password })
+  }
 }

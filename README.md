@@ -85,6 +85,16 @@ O seed também cadastra cinco alunos fictícios (visíveis em Admin > Alunos ap�
 
 Uma aula de demonstração já vem agendada (Ana Beatriz Souza / Fábio Ramos Teixeira / ABC1D23), visível em Admin > Agenda.
 
+### Testando a recuperação de senha
+
+Este projeto não tem integração com nenhum provedor de e-mail. Ao solicitar "Esqueci minha senha" (`/esqueci-senha`) para um e-mail existente, o link de redefinição não é enviado por e-mail — ele é registrado no console/terminal onde a API (`apps/api`) está rodando, no formato:
+
+```
+Password reset link for admin@autoagenda.local: http://localhost:5173/redefinir-senha?token=...
+```
+
+Copie esse link para o navegador para concluir a redefinição de senha. A resposta da API é sempre a mesma mensagem genérica, exista ou não o e-mail informado (SEG-005) — só o console revela se um link foi de fato gerado.
+
 ### Testando o agendamento (Admin > Agenda)
 
 Depois de logar como Admin, acesse **Agenda** no menu: selecione um aluno (a categoria é preenchida automaticamente a partir do cadastro dele), ajuste o período e a duração, clique em **Buscar horários** e depois em **Reservar** em qualquer horário da lista — a busca já considera horário de funcionamento, antecedência mínima e conflitos reais de aluno/instrutor/veículo. Configurações como horário de funcionamento e antecedência são constantes fixas no back-end (`apps/api/src/modules/appointments/appointmentService.ts`) nesta versão, não uma tela administrativa — ver "Sobre o escopo deste projeto" acima.

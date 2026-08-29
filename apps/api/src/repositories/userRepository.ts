@@ -23,6 +23,7 @@ export interface UserRepository {
   findByEmail(email: string): UserRecord | undefined
   findById(id: string): UserRecord | undefined
   create(input: CreateUserInput): UserRecord
+  updatePasswordHash(id: string, passwordHash: string): void
 }
 
 export function createUserRepository(db: DatabaseSync): UserRepository {
@@ -41,6 +42,11 @@ export function createUserRepository(db: DatabaseSync): UserRepository {
          VALUES (?, ?, ?, ?, ?)`,
       ).run(id, email, passwordHash, role, status)
       return findById(id)!
+    },
+    updatePasswordHash(id, passwordHash) {
+      db.prepare(
+        `UPDATE user SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`,
+      ).run(passwordHash, id)
     },
   }
 }

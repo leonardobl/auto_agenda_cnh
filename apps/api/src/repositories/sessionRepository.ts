@@ -17,6 +17,7 @@ export interface SessionRepository {
   create(input: CreateSessionInput): void
   findValidById(id: string): SessionRecord | undefined
   delete(id: string): void
+  deleteAllForUser(userId: string): void
 }
 
 export function createSessionRepository(db: DatabaseSync): SessionRepository {
@@ -37,6 +38,9 @@ export function createSessionRepository(db: DatabaseSync): SessionRepository {
     },
     delete(id) {
       db.prepare('DELETE FROM session WHERE id = ?').run(id)
+    },
+    deleteAllForUser(userId) {
+      db.prepare('DELETE FROM session WHERE user_id = ?').run(userId)
     },
   }
 }

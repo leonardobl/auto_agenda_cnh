@@ -5,20 +5,22 @@ import { Link } from 'react-router-dom'
 import TextField from '../../../Atoms/InputsRHF/TextField'
 import Button from '../../../Atoms/Button'
 import { forgotPasswordSchema, type ForgotPasswordFormData } from './forgotPasswordSchema'
+import { useForgotPassword } from '../../../../hooks/queries/auth/useForgotPassword'
 
 function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false)
+  const { mutate: forgotPassword, isPending } = useForgotPassword()
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordFormData>({ resolver: zodResolver(forgotPasswordSchema) })
 
-  const onSubmit = () => {
-    // Real request-sending is stubbed (no backend yet) — the generic confirmation
-    // message itself is real UI behavior, shown regardless of whether the email
-    // exists, per SEG-005 (docs/07_Seguranca_Privacidade_Auditoria.md).
-    setSubmitted(true)
+  const onSubmit = ({ email }: ForgotPasswordFormData) => {
+    // The confirmation message is shown regardless of the request's outcome — the
+    // backend itself already responds identically whether or not the e-mail exists
+    // (SEG-005), so there is nothing more specific to reveal here either way.
+    forgotPassword(email, { onSettled: () => setSubmitted(true) })
   }
 
   if (submitted) {
@@ -43,7 +45,9 @@ function ForgotPassword() {
           error={errors.email?.message}
           {...register('email')}
         />
-        <Button type="submit">Enviar</Button>
+        <Button type="submit" disabled={isPending}>
+          Enviar
+        </Button>
       </form>
       <p className="mt-4">
         <Link to="/login">Voltar para o login</Link>

@@ -8,7 +8,7 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 
 - [x] Login / logout
 - [x] Sessão (token retornado no corpo da resposta, guardado em `sessionStorage`)
-- [ ] Esqueci a senha / redefinir senha (telas existem no front-end, sem back-end por trás)
+- [x] Esqueci a senha / redefinir senha — `auth-password-reset`. Sem provedor de e-mail: o link de redefinição é registrado no console da API em vez de enviado, decisão documentada em README.md/CLAUDE.md
 
 ## Administrador
 

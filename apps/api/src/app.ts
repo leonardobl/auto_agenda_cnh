@@ -24,7 +24,7 @@ export function createApp({ appOrigin, db }: CreateAppOptions): Express {
   app.use(express.json())
 
   app.use(healthRoutes({ db }))
-  app.use(authRoutes({ db }))
+  app.use(authRoutes({ db, appOrigin }))
   app.use(studentRoutes({ db }))
   app.use(vehicleRoutes({ db }))
   app.use(instructorRoutes({ db }))
