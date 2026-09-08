@@ -18,7 +18,7 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 - [x] Agendar aulas (buscar disponibilidade + criar aula, com detecção real de conflito de aluno/instrutor/veículo) — `appointment-scheduling`. Sem reagendar/cancelar/confirmar/presença/concluir (toda aula fica em AGENDADA); disponibilidade de instrutor e autorização por categoria não são modeladas (todo instrutor ativo conta como sempre disponível/autorizado) — ver Non-Goals em `openspec/changes/archive/`
 - [ ] Configurações da autoescola (horário de funcionamento, duração, antecedência — hoje fixos em código, ver decisão em `appointment-scheduling`) — plano: simular só na interface (sem endpoint), ver "O que é real vs. simulado" no README
 - [ ] Auditoria (consulta de eventos) — plano: simular só na interface (sem endpoint), ver "O que é real vs. simulado" no README
-- [ ] Painel/dashboard — plano: real, agregando dados já existentes via endpoints atuais, sem endpoint novo
+- [x] Painel/dashboard — `admin-dashboard`. Real: contagens de alunos/instrutores/veículos/aulas e lista de próximos agendamentos, agregando dados já existentes via `/students`, `/instructors`, `/vehicles`, `/appointments`, sem endpoint novo
 - [ ] Relatórios (exportação) — plano: simular só na interface (sem endpoint), ver "O que é real vs. simulado" no README
 
 ## Instrutor

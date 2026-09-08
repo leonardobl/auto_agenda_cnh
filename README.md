@@ -15,10 +15,10 @@ Este projeto não implementa um back-end de verdade para toda tela/endpoint que 
 - Gestão de alunos, veículos e instrutores (Admin)
 - Agendamento de aulas (busca de horários + reserva, com detecção real de conflito)
 - Agenda do instrutor (somente leitura, escopada por instrutor)
+- Instrutor > Editar perfil (escopo mínimo: só telefone)
+- Admin > Painel/dashboard (agrega dados já existentes via `/students`, `/instructors`, `/vehicles`, `/appointments`, sem endpoint novo)
 
 **Ainda não implementado — planejado, ver [CHECKLIST.md](CHECKLIST.md) para o estado atual:**
-- Admin > Painel/dashboard — será real (agrega dados já existentes via `/students`, `/instructors`, `/vehicles`, `/appointments`, sem endpoint novo)
-- Instrutor > Editar perfil — será real (endpoint próprio, escopo mínimo: só telefone)
 - Admin > Configurações, Auditoria, Relatórios — serão simulados apenas na interface (sem endpoint em `apps/api`); o código sinaliza isso com um comentário `// mocked: ...` no ponto de chamada
 - Área do Aluno (login, agendar aula, minha agenda, histórico, perfil) — deliberadamente não implementada: neste projeto o aluno não tem conta de login (o Admin agenda em nome dele), então essas telas ficam como placeholder, sem mock, por não terem fluxo real de acesso para demonstrar
 
