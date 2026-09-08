@@ -7,6 +7,7 @@ import Instructors from '../components/Pages/Admin/Instructors'
 import Vehicles from '../components/Pages/Admin/Vehicles'
 import Settings from '../components/Pages/Admin/Settings'
 import AuditLog from '../components/Pages/Admin/AuditLog'
+import Reports from '../components/Pages/Admin/Reports'
 
 export function useAdminRoutes() {
   return (
@@ -18,6 +19,7 @@ export function useAdminRoutes() {
       <Route path="veiculos" element={<Vehicles />} />
       <Route path="configuracoes" element={<Settings />} />
       <Route path="auditoria" element={<AuditLog />} />
+      <Route path="relatorios" element={<Reports />} />
     </Route>
   )
 }

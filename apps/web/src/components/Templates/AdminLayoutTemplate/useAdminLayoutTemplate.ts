@@ -11,6 +11,7 @@ const navItems: NavItem[] = [
   { label: 'Veículos', to: '/admin/veiculos' },
   { label: 'Configurações', to: '/admin/configuracoes' },
   { label: 'Auditoria', to: '/admin/auditoria' },
+  { label: 'Relatórios', to: '/admin/relatorios' },
 ]
 
 export function useAdminLayoutTemplate() {

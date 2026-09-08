@@ -7,8 +7,10 @@ import type { InstructorRepository } from '../../repositories/instructorReposito
 import type { VehicleRepository } from '../../repositories/vehicleRepository.ts'
 
 // Stand-in for a future `system_setting` table (see the appointment-scheduling
-// change's design.md Non-Goals) — hardcoded on purpose for this academic scope,
-// not a settings-editing screen anyone can reach today.
+// change's design.md Non-Goals) — hardcoded on purpose for this academic scope.
+// Admin > Configurações displays these values (mirrored in
+// apps/web/src/constants/schedulingDefaults.ts) but its "save" is mocked and
+// never writes back here — see "O que é real vs. simulado" in README.md.
 const BUSINESS_HOURS_START_HOUR = 8
 const BUSINESS_HOURS_END_HOUR = 18
 const DEFAULT_DURATION_MINUTES = 50

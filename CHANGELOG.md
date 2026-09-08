@@ -9,6 +9,7 @@ Todas as mudanças relevantes deste projeto são documentadas neste arquivo, org
 - Instrutor > Perfil: cada instrutor logado agora vê os próprios dados e pode editar o telefone de contato (`GET/PATCH /instructors/me`). Nome, documento, registro profissional e status continuam sendo alterados apenas pelo Admin.
 - Documentação do critério de escopo do projeto: seção "O que é real vs. simulado" no README, explicando quais telas têm endpoint funcional e quais são simuladas apenas na interface.
 - Admin > Início: painel com contagens reais de alunos, instrutores, veículos e aulas agendadas, além dos próximos agendamentos — sem endpoint novo, agregando dados já servidos pelas telas existentes.
+- Admin > Configurações, Auditoria e Relatórios (esta última nova, com item no menu): últimas telas pendentes do Admin, implementadas como simulações de interface — sem endpoint novo em `apps/api`. Configurações exibe os valores reais do algoritmo de agendamento; Auditoria mostra eventos de exemplo; Relatórios simula uma exportação.
 
 ## 2026-08-29
 

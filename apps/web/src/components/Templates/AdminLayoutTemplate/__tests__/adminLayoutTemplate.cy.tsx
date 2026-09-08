@@ -13,6 +13,7 @@ describe('AdminLayoutTemplate', () => {
       cy.contains('a', 'Veículos').should('be.visible')
       cy.contains('a', 'Configurações').should('be.visible')
       cy.contains('a', 'Auditoria').should('be.visible')
+      cy.contains('a', 'Relatórios').should('be.visible')
     })
   })
 
