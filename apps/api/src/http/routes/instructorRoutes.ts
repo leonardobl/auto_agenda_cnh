@@ -23,9 +23,13 @@ export function instructorRoutes({ db }: InstructorRoutesDeps): Router {
 
   const requireAuthMiddleware = requireAuth({ sessionRepository, userRepository })
   const requireAdmin = requireRole('ADMIN')
+  const requireInstructor = requireRole('INSTRUCTOR')
 
   router.get('/instructors', requireAuthMiddleware, requireAdmin, instructorController.list)
   router.post('/instructors', requireAuthMiddleware, requireAdmin, instructorController.register)
+  // Registered before /instructors/:id so "me" isn't captured as an :id param.
+  router.get('/instructors/me', requireAuthMiddleware, requireInstructor, instructorController.getMe)
+  router.patch('/instructors/me', requireAuthMiddleware, requireInstructor, instructorController.updateMe)
   router.get('/instructors/:id', requireAuthMiddleware, requireAdmin, instructorController.getById)
   router.patch('/instructors/:id', requireAuthMiddleware, requireAdmin, instructorController.update)
 

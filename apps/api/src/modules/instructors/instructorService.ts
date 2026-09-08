@@ -40,11 +40,17 @@ export interface UpdateInstructorParams {
   status?: unknown
 }
 
+export interface UpdateOwnProfileParams {
+  phone?: unknown
+}
+
 export interface InstructorService {
   list(params: ListInstructorsParams): InstructorListResult
   register(params: RegisterInstructorParams): Promise<InstructorRecord>
   getById(id: string): InstructorRecord
   update(id: string, params: UpdateInstructorParams): InstructorRecord
+  getOwnProfile(userId: string): InstructorRecord
+  updateOwnProfile(userId: string, params: UpdateOwnProfileParams): InstructorRecord
 }
 
 interface InstructorServiceDeps {
@@ -194,6 +200,27 @@ export function createInstructorService({
         }
         throw error
       }
+    },
+
+    getOwnProfile(userId) {
+      const instructor = instructorRepository.findByUserId(userId)
+      if (!instructor) {
+        throw new ApiError(404, 'INSTRUCTOR_NOT_FOUND', 'Instrutor não encontrado.')
+      }
+      return instructor
+    },
+
+    updateOwnProfile(userId, { phone }) {
+      const instructor = instructorRepository.findByUserId(userId)
+      if (!instructor) {
+        throw new ApiError(404, 'INSTRUCTOR_NOT_FOUND', 'Instrutor não encontrado.')
+      }
+
+      const updated = instructorRepository.update(instructor.id, {
+        phone: typeof phone === 'string' ? phone.trim() : undefined,
+      })
+
+      return updated!
     },
   }
 }

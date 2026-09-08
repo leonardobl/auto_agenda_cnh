@@ -16,16 +16,16 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 - [x] Gerenciar veículos (cadastrar, listar/buscar/filtrar, editar — status incluso)
 - [x] Gerenciar instrutores (cadastrar com conta de login própria, listar/buscar/filtrar, editar)
 - [x] Agendar aulas (buscar disponibilidade + criar aula, com detecção real de conflito de aluno/instrutor/veículo) — `appointment-scheduling`. Sem reagendar/cancelar/confirmar/presença/concluir (toda aula fica em AGENDADA); disponibilidade de instrutor e autorização por categoria não são modeladas (todo instrutor ativo conta como sempre disponível/autorizado) — ver Non-Goals em `openspec/changes/archive/`
-- [ ] Configurações da autoescola (horário de funcionamento, duração, antecedência — hoje fixos em código, ver decisão em `appointment-scheduling`)
-- [ ] Auditoria (consulta de eventos)
-- [ ] Painel/dashboard
-- [ ] Relatórios (exportação)
+- [ ] Configurações da autoescola (horário de funcionamento, duração, antecedência — hoje fixos em código, ver decisão em `appointment-scheduling`) — plano: simular só na interface (sem endpoint), ver "O que é real vs. simulado" no README
+- [ ] Auditoria (consulta de eventos) — plano: simular só na interface (sem endpoint), ver "O que é real vs. simulado" no README
+- [ ] Painel/dashboard — plano: real, agregando dados já existentes via endpoints atuais, sem endpoint novo
+- [ ] Relatórios (exportação) — plano: simular só na interface (sem endpoint), ver "O que é real vs. simulado" no README
 
 ## Instrutor
 
 - [x] Ver a própria agenda — `instructor-schedule`. Somente leitura (sem reagendar/cancelar/confirmar); `GET /appointments` escopado por instrutor no próprio servidor, reaproveitando o mesmo endpoint do Admin
 - [ ] Disponibilidade semanal / bloqueios (deliberadamente fora de escopo — ver Non-Goals de `appointment-scheduling`)
-- [ ] Editar o próprio perfil
+- [x] Editar o próprio perfil — `instructor-edit-profile`. Real: `GET/PATCH /instructors/me`, escopo mínimo (só telefone editável; nome/documento/registro/status continuam só-Admin)
 
 ## Aluno
 
@@ -33,6 +33,8 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 - [ ] Agendar aula (self-service)
 - [ ] Ver minha agenda / histórico
 - [ ] Editar o próprio perfil
+
+Toda a área do Aluno acima fica como placeholder sem mock — decisão confirmada em 2026-09-08: como o aluno não tem conta de login neste projeto, essas telas não têm fluxo real de acesso para demonstrar, então não valem o esforço de simular.
 
 ## Transversais
 

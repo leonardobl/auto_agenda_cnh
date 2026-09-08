@@ -64,4 +64,14 @@ export class InstructorService {
     const { data } = await api.patch<Instructor>(`/instructors/${id}`, input)
     return data
   }
+
+  static async getMe(): Promise<Instructor> {
+    const { data } = await api.get<Instructor>('/instructors/me')
+    return data
+  }
+
+  static async updateMe(phone: string): Promise<Instructor> {
+    const { data } = await api.patch<Instructor>('/instructors/me', { phone })
+    return data
+  }
 }

@@ -2,6 +2,13 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-09-08
+
+### Adicionado
+
+- Instrutor > Perfil: cada instrutor logado agora vê os próprios dados e pode editar o telefone de contato (`GET/PATCH /instructors/me`). Nome, documento, registro profissional e status continuam sendo alterados apenas pelo Admin.
+- Documentação do critério de escopo do projeto: seção "O que é real vs. simulado" no README, explicando quais telas têm endpoint funcional e quais são simuladas apenas na interface.
+
 ## 2026-08-29
 
 ### Adicionado

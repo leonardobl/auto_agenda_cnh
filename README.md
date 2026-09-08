@@ -6,6 +6,22 @@ Aplicação web para agendamento de aulas práticas de autoescola (CNH) — proj
 
 Este é um entregável acadêmico, não um produto em produção — o objetivo é demonstrar entendimento dos requisitos e um funcionamento real das partes centrais, não implementar 100% do que a especificação (`docs/`) descreve. Algumas peças de apoio são deliberadamente simplificadas ou fixadas em código (ex.: configurações de horário/duração/antecedência do agendamento são constantes no código, não uma tela administrativa) em vez de ganharem CRUD/tela próprios — cada decisão desse tipo fica registrada no `design.md` da change correspondente (arquivado em `openspec/changes/archive/`, fora do controle de versão) e, quando relevante para quem só olha o código, também aqui e em [CLAUDE.md](CLAUDE.md). O critério é sempre o mesmo: o que está implementado deve funcionar de verdade (login, cadastros, o motor de agendamento), mesmo que nem toda tela/fluxo secundário da especificação exista.
 
+### O que é real vs. simulado
+
+Este projeto não implementa um back-end de verdade para toda tela/endpoint que a especificação (`docs/`) descreve — isso deixaria o projeto muito mais robusto do que um Projeto Integrador II precisa ser. Para as áreas ainda pendentes, a estratégia é: uma ou outra funcionalidade ganha endpoint real (quando ensina algo distinto), e o restante é simulado só na interface (toast de sucesso, dado fixo em tela), sem chamada real ao `apps/api`, deixado assim de propósito e não como algo "para terminar depois". Panorama atual:
+
+**Real, com endpoint funcional em `apps/api`:**
+- Autenticação (login/logout, recuperação de senha)
+- Gestão de alunos, veículos e instrutores (Admin)
+- Agendamento de aulas (busca de horários + reserva, com detecção real de conflito)
+- Agenda do instrutor (somente leitura, escopada por instrutor)
+
+**Ainda não implementado — planejado, ver [CHECKLIST.md](CHECKLIST.md) para o estado atual:**
+- Admin > Painel/dashboard — será real (agrega dados já existentes via `/students`, `/instructors`, `/vehicles`, `/appointments`, sem endpoint novo)
+- Instrutor > Editar perfil — será real (endpoint próprio, escopo mínimo: só telefone)
+- Admin > Configurações, Auditoria, Relatórios — serão simulados apenas na interface (sem endpoint em `apps/api`); o código sinaliza isso com um comentário `// mocked: ...` no ponto de chamada
+- Área do Aluno (login, agendar aula, minha agenda, histórico, perfil) — deliberadamente não implementada: neste projeto o aluno não tem conta de login (o Admin agenda em nome dele), então essas telas ficam como placeholder, sem mock, por não terem fluxo real de acesso para demonstrar
+
 ## Estrutura do repositório
 
 Monorepo (Yarn workspaces):

@@ -35,5 +35,15 @@ export function createInstructorController({ instructorService }: InstructorCont
       const instructor = instructorService.update(requireIdParam(req), req.body ?? {})
       res.status(200).json(instructor)
     },
+
+    getMe(req: Request, res: Response) {
+      const instructor = instructorService.getOwnProfile(req.user!.id)
+      res.status(200).json(instructor)
+    },
+
+    updateMe(req: Request, res: Response) {
+      const instructor = instructorService.updateOwnProfile(req.user!.id, req.body ?? {})
+      res.status(200).json(instructor)
+    },
   }
 }
