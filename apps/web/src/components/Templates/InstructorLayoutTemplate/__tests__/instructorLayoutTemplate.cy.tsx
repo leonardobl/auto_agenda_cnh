@@ -1,4 +1,3 @@
-import { toast } from 'react-toastify'
 import InstructorLayoutTemplate from '..'
 
 describe('InstructorLayoutTemplate', () => {
@@ -18,15 +17,17 @@ describe('InstructorLayoutTemplate', () => {
     cy.contains('button', 'Sair').should('be.visible')
   })
 
-  it('Deve notificar que o logout ainda não está disponível ao clicar em "Sair"', () => {
-    cy.stub(toast, 'info').as('toastInfo')
-    cy.mount(<InstructorLayoutTemplate />)
+  it('Deve encerrar a sessão e limpar o token ao clicar em "Sair"', () => {
+    cy.intercept('POST', '**/auth/logout', { statusCode: 204 }).as('logout')
+    sessionStorage.setItem('authToken', 'fake-token')
 
+    cy.mount(<InstructorLayoutTemplate />)
     cy.contains('button', 'Sair').click()
 
-    cy.get('@toastInfo').should(
-      'have.been.calledWith',
-      'Encerrar sessão ainda não está disponível.',
-    )
+    cy.wait('@logout')
+    cy.window()
+      .its('sessionStorage')
+      .invoke('getItem', 'authToken')
+      .should('be.null')
   })
 })

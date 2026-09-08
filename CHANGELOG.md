@@ -10,6 +10,10 @@ Todas as mudanças relevantes deste projeto são documentadas neste arquivo, org
 - Documentação do critério de escopo do projeto: seção "O que é real vs. simulado" no README, explicando quais telas têm endpoint funcional e quais são simuladas apenas na interface.
 - Admin > Início: painel com contagens reais de alunos, instrutores, veículos e aulas agendadas, além dos próximos agendamentos — sem endpoint novo, agregando dados já servidos pelas telas existentes.
 
+### Corrigido
+
+- Botão "Sair" (Admin, Instrutor e Aluno): estava travado em um aviso de "ainda não disponível" mesmo com o back-end de logout já funcionando; agora encerra a sessão de verdade e volta para a tela de login.
+
 ## 2026-08-29
 
 ### Adicionado

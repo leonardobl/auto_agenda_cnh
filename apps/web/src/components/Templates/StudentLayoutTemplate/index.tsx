@@ -1,14 +1,22 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import Button from '../../Atoms/Button'
 import { mergeClassNames } from '../../../utils/mergeClassNames'
+import { clearSessionToken } from '../../../utils/sessionToken'
+import { useLogout } from '../../../hooks/queries/auth/useLogout'
 import { useStudentLayoutTemplate } from './useStudentLayoutTemplate'
 
 function StudentLayoutTemplate() {
+  const navigate = useNavigate()
   const { navItems } = useStudentLayoutTemplate()
+  const { mutate: logout } = useLogout()
 
   const handleSignOut = () => {
-    toast.info('Encerrar sessão ainda não está disponível.')
+    logout(undefined, {
+      onSuccess: () => {
+        clearSessionToken()
+        navigate('/login')
+      },
+    })
   }
 
   return (
