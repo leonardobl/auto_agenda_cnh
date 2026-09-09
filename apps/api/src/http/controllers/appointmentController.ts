@@ -8,12 +8,18 @@ interface AppointmentControllerDeps {
 export function createAppointmentController({ appointmentService }: AppointmentControllerDeps) {
   return {
     searchSlots(req: Request, res: Response) {
-      const slots = appointmentService.searchSlots(req.query)
+      const slots = appointmentService.searchSlots(req.query, {
+        role: req.user!.role,
+        userId: req.user!.id,
+      })
       res.status(200).json({ items: slots })
     },
 
     book(req: Request, res: Response) {
-      const appointment = appointmentService.book(req.body ?? {}, req.user!.id)
+      const appointment = appointmentService.book(req.body ?? {}, {
+        role: req.user!.role,
+        userId: req.user!.id,
+      })
       res.status(201).json(appointment)
     },
 

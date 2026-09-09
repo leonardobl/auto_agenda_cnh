@@ -34,10 +34,12 @@ export interface FindManyParams {
   page: number
   pageSize: number
   instructorId?: string
+  studentId?: string
 }
 
 export interface CountParams {
   instructorId?: string
+  studentId?: string
 }
 
 export interface AppointmentRepository {
@@ -112,18 +114,28 @@ export function createAppointmentRepository(db: DatabaseSync): AppointmentReposi
       return findById(id)!
     },
 
-    findMany({ page, pageSize, instructorId }) {
+    findMany({ page, pageSize, instructorId, studentId }) {
       const offset = (page - 1) * pageSize
-      const where = instructorId ? 'WHERE appointment.instructor_id = ?' : ''
-      const params = instructorId ? [instructorId] : []
+      // A single requester has exactly one role, so instructorId/studentId are never
+      // both set at once — this is a parallel scoping branch, not a combined filter.
+      const where = instructorId
+        ? 'WHERE appointment.instructor_id = ?'
+        : studentId
+          ? 'WHERE appointment.student_id = ?'
+          : ''
+      const params = instructorId ? [instructorId] : studentId ? [studentId] : []
       return db
         .prepare(`${SELECT_WITH_NAMES} ${where} ORDER BY appointment.start_at LIMIT ? OFFSET ?`)
         .all(...params, pageSize, offset) as unknown as AppointmentRecord[]
     },
 
-    count({ instructorId }) {
-      const where = instructorId ? 'WHERE instructor_id = ?' : ''
-      const params = instructorId ? [instructorId] : []
+    count({ instructorId, studentId }) {
+      const where = instructorId
+        ? 'WHERE instructor_id = ?'
+        : studentId
+          ? 'WHERE student_id = ?'
+          : ''
+      const params = instructorId ? [instructorId] : studentId ? [studentId] : []
       const row = db
         .prepare(`SELECT COUNT(*) as total FROM appointment ${where}`)
         .get(...params) as { total: number }

@@ -71,4 +71,19 @@ export class StudentService {
     const { data } = await api.get<LicenseCategory[]>('/license-categories')
     return data
   }
+
+  static async createAccount(id: string, input: { email: string; password: string }): Promise<Student> {
+    const { data } = await api.post<Student>(`/students/${id}/create-account`, input)
+    return data
+  }
+
+  static async getMe(): Promise<Student> {
+    const { data } = await api.get<Student>('/students/me')
+    return data
+  }
+
+  static async updateMe(phone: string): Promise<Student> {
+    const { data } = await api.patch<Student>('/students/me', { phone })
+    return data
+  }
 }

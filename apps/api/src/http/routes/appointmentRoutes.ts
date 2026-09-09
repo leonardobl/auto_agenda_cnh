@@ -34,12 +34,22 @@ export function appointmentRoutes({ db }: AppointmentRoutesDeps): Router {
   const appointmentController = createAppointmentController({ appointmentService })
 
   const requireAuthMiddleware = requireAuth({ sessionRepository, userRepository })
-  const requireAdmin = requireRole('ADMIN')
-  const requireAdminOrInstructor = requireRole('ADMIN', 'INSTRUCTOR')
+  const requireAdminOrStudent = requireRole('ADMIN', 'STUDENT')
+  const requireAdminOrInstructorOrStudent = requireRole('ADMIN', 'INSTRUCTOR', 'STUDENT')
 
-  router.get('/availability/slots', requireAuthMiddleware, requireAdmin, appointmentController.searchSlots)
-  router.post('/appointments', requireAuthMiddleware, requireAdmin, appointmentController.book)
-  router.get('/appointments', requireAuthMiddleware, requireAdminOrInstructor, appointmentController.list)
+  router.get(
+    '/availability/slots',
+    requireAuthMiddleware,
+    requireAdminOrStudent,
+    appointmentController.searchSlots,
+  )
+  router.post('/appointments', requireAuthMiddleware, requireAdminOrStudent, appointmentController.book)
+  router.get(
+    '/appointments',
+    requireAuthMiddleware,
+    requireAdminOrInstructorOrStudent,
+    appointmentController.list,
+  )
 
   return router
 }

@@ -40,5 +40,20 @@ export function createStudentController({ studentService }: StudentControllerDep
       const student = studentService.deactivate(requireIdParam(req))
       res.status(200).json(student)
     },
+
+    async createAccount(req: Request, res: Response) {
+      const student = await studentService.createAccount(requireIdParam(req), req.body ?? {})
+      res.status(201).json(student)
+    },
+
+    getMe(req: Request, res: Response) {
+      const student = studentService.getOwnProfile(req.user!.id)
+      res.status(200).json(student)
+    },
+
+    updateMe(req: Request, res: Response) {
+      const student = studentService.updateOwnProfile(req.user!.id, req.body ?? {})
+      res.status(200).json(student)
+    },
   }
 }

@@ -2,6 +2,18 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-09-09
+
+### Adicionado
+
+- Conta de login para aluno: Admin pode conceder acesso a um aluno já cadastrado (`POST /students/:id/create-account`), revertendo a decisão anterior de que aluno não autentica neste projeto.
+- Área do Aluno completa: perfil próprio (`GET/PATCH /students/me`, só telefone editável), Minha agenda e Histórico (mesma listagem de aulas, dividida por data), e agendamento self-service (busca de horários e reserva sem escolher aluno ou categoria — ambos resolvidos automaticamente a partir da conta logada).
+- Um aluno de demonstração já vem com conta de login própria, documentado no README junto com as demais credenciais de teste.
+
+### Alterado
+
+- `GET /appointments`, `GET /availability/slots` e `POST /appointments` agora também aceitam o perfil Aluno, escopados server-side ao próprio aluno autenticado.
+
 ## 2026-09-08
 
 ### Adicionado

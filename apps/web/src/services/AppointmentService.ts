@@ -36,8 +36,10 @@ export interface AppointmentListResult {
 }
 
 export interface SearchSlotsParams {
-  studentId: string
-  categoryId: string
+  // Optional for a STUDENT caller — resolved server-side from their own linked
+  // student record and ignored if sent; required for the Admin-driven flow.
+  studentId?: string
+  categoryId?: string
   dateFrom?: string
   dateTo?: string
   durationMinutes?: number
@@ -49,10 +51,11 @@ export interface ListAppointmentsParams {
 }
 
 export interface BookAppointmentData {
-  studentId: string
+  // Same STUDENT-role override as SearchSlotsParams above.
+  studentId?: string
   instructorId: string
   vehicleId: string
-  categoryId: string
+  categoryId?: string
   startAt: string
   durationMinutes?: number
 }

@@ -1,13 +1,45 @@
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useLicenseCategories } from '../../../../hooks/queries/students/useLicenseCategories'
 import { DEFAULT_PAGE_SIZE } from '../../../../constants/pagination'
 import Button from '../../../Atoms/Button'
 import Modal from '../../../Atoms/Modal'
+import TextField from '../../../Atoms/InputsRHF/TextField'
 import StudentForm from '../../../Molecules/StudentForm'
 import { useStudentsPage } from './useStudentsPage'
+import { createAccountSchema, type CreateAccountSchemaValues } from './createAccountSchema'
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Ativo',
   INACTIVE: 'Inativo',
+}
+
+interface CreateAccountFormProps {
+  isSubmitting: boolean
+  onSubmit: (values: CreateAccountSchemaValues) => void
+}
+
+function CreateAccountForm({ isSubmitting, onSubmit }: CreateAccountFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateAccountSchemaValues>({ resolver: zodResolver(createAccountSchema) })
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+      <TextField label="E-mail" type="email" error={errors.email?.message} {...register('email')} />
+      <TextField
+        label="Senha"
+        type="password"
+        error={errors.password?.message}
+        {...register('password')}
+      />
+      <Button type="submit" disabled={isSubmitting}>
+        Criar acesso
+      </Button>
+    </form>
+  )
 }
 
 function Students() {
@@ -20,14 +52,17 @@ function Students() {
     status,
     modal,
     isSaving,
+    isCreatingAccount,
     handleSearchChange,
     handleStatusChange,
     setPage,
     openCreateModal,
     openEditModal,
+    openCreateAccountModal,
     closeModal,
     handleCreateSubmit,
     handleEditSubmit,
+    handleCreateAccountSubmit,
     handleDeactivate,
   } = useStudentsPage()
 
@@ -94,6 +129,15 @@ function Students() {
                       <button type="button" onClick={() => openEditModal(student)} className="text-primary">
                         Editar
                       </button>
+                      {!student.user_id && (
+                        <button
+                          type="button"
+                          onClick={() => openCreateAccountModal(student)}
+                          className="text-primary"
+                        >
+                          Criar acesso
+                        </button>
+                      )}
                       {student.status === 'ACTIVE' && (
                         <button
                           type="button"
@@ -127,7 +171,13 @@ function Students() {
       <Modal
         open={modal.mode !== 'closed'}
         onClose={closeModal}
-        title={modal.mode === 'edit' ? 'Editar aluno' : 'Novo aluno'}
+        title={
+          modal.mode === 'edit'
+            ? 'Editar aluno'
+            : modal.mode === 'create-account'
+              ? 'Criar acesso'
+              : 'Novo aluno'
+        }
       >
         {modal.mode === 'create' && (
           <StudentForm submitLabel="Cadastrar" isSubmitting={isSaving} onSubmit={handleCreateSubmit} />
@@ -144,6 +194,12 @@ function Students() {
               categoryId: modal.student.category_id,
             }}
             onSubmit={handleEditSubmit(modal.student.id)}
+          />
+        )}
+        {modal.mode === 'create-account' && (
+          <CreateAccountForm
+            isSubmitting={isCreatingAccount}
+            onSubmit={handleCreateAccountSubmit(modal.student.id)}
           />
         )}
       </Modal>

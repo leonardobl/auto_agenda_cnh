@@ -24,15 +24,24 @@ export async function seedDemoUser(db: DatabaseSync): Promise<void> {
   console.log(`Seeded demo user: ${DEMO_USER_EMAIL}`)
 }
 
+export const DEMO_STUDENT_EMAIL = 'aluno1@autoagenda.local'
+export const DEMO_STUDENT_PASSWORD = 'Demo@123'
+
 const DEMO_STUDENTS = [
-  { fullName: 'Ana Beatriz Souza', document: '12345678901', phone: '(11) 91234-5601', categoryCode: 'B' },
+  {
+    fullName: 'Ana Beatriz Souza',
+    document: '12345678901',
+    phone: '(11) 91234-5601',
+    categoryCode: 'B',
+    email: DEMO_STUDENT_EMAIL,
+  },
   { fullName: 'Bruno Carvalho Lima', document: '12345678902', phone: '(11) 91234-5602', categoryCode: 'A' },
   { fullName: 'Camila Ferreira Dias', document: '12345678903', phone: '(11) 91234-5603', categoryCode: 'AB' },
   { fullName: 'Diego Martins Rocha', document: '12345678904', phone: '(11) 91234-5604', categoryCode: 'B' },
   { fullName: 'Elisa Nogueira Pinto', document: '12345678905', phone: '(11) 91234-5605', categoryCode: 'C' },
 ] as const
 
-export function seedDemoStudents(db: DatabaseSync): void {
+export async function seedDemoStudents(db: DatabaseSync): Promise<void> {
   const existing = db.prepare('SELECT id FROM student LIMIT 1').get()
   if (existing) return
 
@@ -43,17 +52,30 @@ export function seedDemoStudents(db: DatabaseSync): void {
   )
 
   const insert = db.prepare(
-    `INSERT INTO student (id, full_name, document, phone, category_id, status)
-     VALUES (?, ?, ?, ?, ?, 'ACTIVE')`,
+    `INSERT INTO student (id, user_id, full_name, document, phone, category_id, status)
+     VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')`,
   )
 
+  let linkedAccounts = 0
   for (const student of DEMO_STUDENTS) {
     const categoryId = categoryByCode.get(student.categoryCode)
     if (!categoryId) continue
-    insert.run(randomUUID(), student.fullName, student.document, student.phone, categoryId)
+
+    let userId: string | null = null
+    if ('email' in student && student.email) {
+      const passwordHash = await hashPassword(DEMO_STUDENT_PASSWORD)
+      userId = randomUUID()
+      db.prepare(
+        `INSERT INTO user (id, email, password_hash, role, status)
+         VALUES (?, ?, ?, 'STUDENT', 'ACTIVE')`,
+      ).run(userId, student.email, passwordHash)
+      linkedAccounts += 1
+    }
+
+    insert.run(randomUUID(), userId, student.fullName, student.document, student.phone, categoryId)
   }
 
-  console.log(`Seeded ${DEMO_STUDENTS.length} demo students`)
+  console.log(`Seeded ${DEMO_STUDENTS.length} demo students (${linkedAccounts} with login account)`)
 }
 
 const DEMO_VEHICLES = [
@@ -185,7 +207,7 @@ export function seedDemoAppointments(db: DatabaseSync): void {
         startAt: startAt.toISOString(),
         durationMinutes: 50,
       },
-      admin.id,
+      { role: 'ADMIN', userId: admin.id },
     )
     console.log('Seeded 1 demo appointment')
   } catch (error) {

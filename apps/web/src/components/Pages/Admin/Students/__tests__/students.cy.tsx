@@ -75,6 +75,37 @@ describe('Students (Administrador)', () => {
     cy.contains('h2', 'Novo aluno').should('not.be.visible')
   })
 
+  it('Deve criar acesso de login para um aluno sem conta', () => {
+    cy.intercept('POST', '**/students/student-1/create-account', {
+      statusCode: 201,
+      body: { ...STUDENTS[0], user_id: 'user-1' },
+    }).as('createAccount')
+
+    cy.mount(<Students />)
+    cy.wait('@listStudents')
+
+    cy.contains('button', 'Criar acesso').click()
+    cy.get('#email').type('ana@teste.com.br')
+    cy.get('#password').type('12345678')
+    cy.get('form').contains('button', 'Criar acesso').click()
+
+    cy.wait('@createAccount')
+      .its('request.body')
+      .should('deep.equal', { email: 'ana@teste.com.br', password: '12345678' })
+  })
+
+  it('Não deve exibir "Criar acesso" para aluno que já tem conta', () => {
+    cy.intercept('GET', '**/students*', {
+      statusCode: 200,
+      body: { items: [{ ...STUDENTS[0], user_id: 'user-1' }], page: 1, pageSize: 10, total: 1 },
+    }).as('listStudentsWithAccount')
+
+    cy.mount(<Students />)
+    cy.wait('@listStudentsWithAccount')
+
+    cy.contains('button', 'Criar acesso').should('not.exist')
+  })
+
   it('Deve inativar um aluno após confirmação', () => {
     cy.intercept('POST', '**/students/student-1/deactivate', {
       statusCode: 200,

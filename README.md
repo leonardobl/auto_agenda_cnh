@@ -103,7 +103,19 @@ O seed também cadastra cinco alunos fictícios (visíveis em Admin > Alunos ap�
 | `instrutor1@autoagenda.local` | `Demo@123` | `INSTRUCTOR` |
 | `instrutor2@autoagenda.local` | `Demo@123` | `INSTRUCTOR` |
 
-Uma aula de demonstração já vem agendada (Ana Beatriz Souza / Fábio Ramos Teixeira / ABC1D23), visível em Admin > Agenda.
+Uma aula de demonstração já vem agendada (Ana Beatriz Souza / Fábio Ramos Teixeira / ABC1D23), visível em Admin > Agenda. Dos cinco alunos fictícios, um já vem com conta de login própria — os demais podem ganhar acesso pelo Admin (ver "Testando o self-service do aluno" abaixo):
+
+| E-mail | Senha | Perfil |
+|---|---|---|
+| `aluno1@autoagenda.local` | `Demo@123` | `STUDENT` |
+
+### Testando o self-service do aluno
+
+Aluno agenda a própria aula, sem escolher aluno ou categoria — ambos são resolvidos automaticamente a partir da conta logada. Faça login com a conta de demonstração acima (ou crie uma nova em Admin > Alunos > "Criar acesso", para qualquer aluno que ainda não tenha conta) e acesse:
+
+- **Perfil**: dados cadastrais (somente leitura) e edição do telefone de contato.
+- **Agendar aula**: busca de horários (só data/duração, sem seletor de aluno/categoria) e reserva.
+- **Minha agenda** / **Histórico**: mesma listagem de aulas do aluno, dividida por data (futuras / passadas).
 
 ### Testando a recuperação de senha
 

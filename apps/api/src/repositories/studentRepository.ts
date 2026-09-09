@@ -44,9 +44,11 @@ export interface StudentRepository {
   findMany(params: FindManyParams): StudentRecord[]
   count(filters: StudentFilters): number
   findById(id: string): StudentRecord | undefined
+  findByUserId(userId: string): StudentRecord | undefined
   create(input: CreateStudentInput): StudentRecord
   update(id: string, input: UpdateStudentInput): StudentRecord | undefined
   updateStatus(id: string, status: string): StudentRecord | undefined
+  linkUserId(id: string, userId: string): StudentRecord | undefined
 }
 
 function buildFilters({ search, status }: StudentFilters): { where: string; params: string[] } {
@@ -91,6 +93,12 @@ export function createStudentRepository(db: DatabaseSync): StudentRepository {
 
     findById,
 
+    findByUserId(userId) {
+      return db.prepare('SELECT * FROM student WHERE user_id = ?').get(userId) as
+        | StudentRecord
+        | undefined
+    },
+
     create({ id, fullName, document, phone, birthDate, categoryId }) {
       db.prepare(
         `INSERT INTO student (id, full_name, document, phone, birth_date, category_id, status)
@@ -120,6 +128,14 @@ export function createStudentRepository(db: DatabaseSync): StudentRepository {
 
     updateStatus(id, status) {
       db.prepare(`UPDATE student SET status = ?, updated_at = datetime('now') WHERE id = ?`).run(status, id)
+      return findById(id)
+    },
+
+    linkUserId(id, userId) {
+      db.prepare(`UPDATE student SET user_id = ?, updated_at = datetime('now') WHERE id = ?`).run(
+        userId,
+        id,
+      )
       return findById(id)
     },
   }

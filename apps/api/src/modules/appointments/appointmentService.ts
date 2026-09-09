@@ -65,8 +65,8 @@ export interface Requester {
 }
 
 export interface AppointmentService {
-  searchSlots(params: SearchSlotsParams): AvailableSlot[]
-  book(params: BookAppointmentParams, createdBy: string): AppointmentRecord
+  searchSlots(params: SearchSlotsParams, requester: Requester): AvailableSlot[]
+  book(params: BookAppointmentParams, requester: Requester): AppointmentRecord
   list(params: ListAppointmentsParams, requester: Requester): AppointmentListResult
 }
 
@@ -124,19 +124,33 @@ export function createAppointmentService({
   vehicleRepository,
 }: AppointmentServiceDeps): AppointmentService {
   return {
-    searchSlots({ studentId, categoryId, dateFrom, dateTo, durationMinutes }) {
-      if (typeof studentId !== 'string' || !studentId) {
+    searchSlots({ studentId, categoryId, dateFrom, dateTo, durationMinutes }, requester) {
+      // A STUDENT caller can only ever search for themselves, in their own registered
+      // category — any studentId/categoryId sent in the request is ignored for this
+      // role (see design.md's "self-service booking" decision).
+      let effectiveStudentId = studentId
+      let effectiveCategoryId = categoryId
+      if (requester.role === 'STUDENT') {
+        const own = studentRepository.findByUserId(requester.userId)
+        if (!own) {
+          throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
+        }
+        effectiveStudentId = own.id
+        effectiveCategoryId = own.category_id
+      }
+
+      if (typeof effectiveStudentId !== 'string' || !effectiveStudentId) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Informe o aluno.')
       }
-      if (typeof categoryId !== 'string' || !categoryId) {
+      if (typeof effectiveCategoryId !== 'string' || !effectiveCategoryId) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Informe a categoria.')
       }
 
-      const student = studentRepository.findById(studentId)
+      const student = studentRepository.findById(effectiveStudentId)
       if (!student || student.status !== 'ACTIVE') {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
       }
-      if (student.category_id !== categoryId) {
+      if (student.category_id !== effectiveCategoryId) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Categoria incompatível com o aluno.')
       }
 
@@ -163,7 +177,7 @@ export function createAppointmentService({
       })
       const candidateVehicles = vehicleRepository
         .findMany({ page: 1, pageSize: 1000, status: 'ACTIVE' })
-        .filter((vehicle) => vehicle.category_id === categoryId)
+        .filter((vehicle) => vehicle.category_id === effectiveCategoryId)
 
       const slots: AvailableSlot[] = []
       let cursor = new Date(from)
@@ -180,7 +194,7 @@ export function createAppointmentService({
         const startIso = start.toISOString()
         const endIso = end.toISOString()
 
-        if (!appointmentRepository.isStudentFree(studentId, startIso, endIso)) {
+        if (!appointmentRepository.isStudentFree(effectiveStudentId, startIso, endIso)) {
           continue
         }
 
@@ -207,16 +221,28 @@ export function createAppointmentService({
       return slots
     },
 
-    book({ studentId, instructorId, vehicleId, categoryId, startAt, durationMinutes }, createdBy) {
+    book({ studentId, instructorId, vehicleId, categoryId, startAt, durationMinutes }, requester) {
+      // Same STUDENT-role override as searchSlots — see design.md.
+      let effectiveStudentId = studentId
+      let effectiveCategoryId = categoryId
+      if (requester.role === 'STUDENT') {
+        const own = studentRepository.findByUserId(requester.userId)
+        if (!own) {
+          throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
+        }
+        effectiveStudentId = own.id
+        effectiveCategoryId = own.category_id
+      }
+
       if (
-        typeof studentId !== 'string' ||
-        !studentId ||
+        typeof effectiveStudentId !== 'string' ||
+        !effectiveStudentId ||
         typeof instructorId !== 'string' ||
         !instructorId ||
         typeof vehicleId !== 'string' ||
         !vehicleId ||
-        typeof categoryId !== 'string' ||
-        !categoryId ||
+        typeof effectiveCategoryId !== 'string' ||
+        !effectiveCategoryId ||
         typeof startAt !== 'string' ||
         !startAt
       ) {
@@ -234,7 +260,7 @@ export function createAppointmentService({
       const duration = parseDuration(durationMinutes)
       const end = new Date(start.getTime() + duration * 60 * 1000)
 
-      const student = studentRepository.findById(studentId)
+      const student = studentRepository.findById(effectiveStudentId)
       if (!student || student.status !== 'ACTIVE') {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
       }
@@ -249,7 +275,7 @@ export function createAppointmentService({
         throw new ApiError(400, 'VALIDATION_ERROR', 'Veículo inválido ou indisponível.')
       }
 
-      if (student.category_id !== categoryId || vehicle.category_id !== categoryId) {
+      if (student.category_id !== effectiveCategoryId || vehicle.category_id !== effectiveCategoryId) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Categoria incompatível com o aluno ou o veículo.')
       }
 
@@ -270,7 +296,7 @@ export function createAppointmentService({
       // here — see design.md. Keep this block free of `await`.
       db.exec('BEGIN')
       try {
-        if (!appointmentRepository.isStudentFree(studentId, startIso, endIso)) {
+        if (!appointmentRepository.isStudentFree(effectiveStudentId, startIso, endIso)) {
           throw new ApiError(409, 'APPOINTMENT_STUDENT_CONFLICT', 'O aluno já possui uma aula nesse horário.')
         }
         if (!appointmentRepository.isInstructorFree(instructorId, startIso, endIso)) {
@@ -282,13 +308,13 @@ export function createAppointmentService({
 
         const appointment = appointmentRepository.create({
           id: randomUUID(),
-          studentId,
+          studentId: effectiveStudentId,
           instructorId,
           vehicleId,
-          categoryId,
+          categoryId: effectiveCategoryId,
           startAt: startIso,
           endAt: endIso,
-          createdBy,
+          createdBy: requester.userId,
         })
 
         db.exec('COMMIT')
@@ -304,16 +330,28 @@ export function createAppointmentService({
       const parsedPageSize = parsePageSize(pageSize)
 
       let instructorId: string | undefined
+      let studentId: string | undefined
       if (requester.role === 'INSTRUCTOR') {
         const instructor = instructorRepository.findByUserId(requester.userId)
         if (!instructor) {
           return { items: [], page: parsedPage, pageSize: parsedPageSize, total: 0 }
         }
         instructorId = instructor.id
+      } else if (requester.role === 'STUDENT') {
+        const student = studentRepository.findByUserId(requester.userId)
+        if (!student) {
+          return { items: [], page: parsedPage, pageSize: parsedPageSize, total: 0 }
+        }
+        studentId = student.id
       }
 
-      const items = appointmentRepository.findMany({ page: parsedPage, pageSize: parsedPageSize, instructorId })
-      const total = appointmentRepository.count({ instructorId })
+      const items = appointmentRepository.findMany({
+        page: parsedPage,
+        pageSize: parsedPageSize,
+        instructorId,
+        studentId,
+      })
+      const total = appointmentRepository.count({ instructorId, studentId })
 
       return { items, page: parsedPage, pageSize: parsedPageSize, total }
     },

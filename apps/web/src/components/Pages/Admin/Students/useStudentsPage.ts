@@ -4,10 +4,20 @@ import { useStudents } from '../../../../hooks/queries/students/useStudents'
 import { useCreateStudent } from '../../../../hooks/queries/students/useCreateStudent'
 import { useUpdateStudent } from '../../../../hooks/queries/students/useUpdateStudent'
 import { useDeactivateStudent } from '../../../../hooks/queries/students/useDeactivateStudent'
+import { useCreateStudentAccount } from '../../../../hooks/queries/students/useCreateStudentAccount'
 import type { Student } from '../../../../services/StudentService'
 import type { StudentFormValues } from '../../../Molecules/StudentForm/studentSchema'
 
-type ModalState = { mode: 'closed' } | { mode: 'create' } | { mode: 'edit'; student: Student }
+type ModalState =
+  | { mode: 'closed' }
+  | { mode: 'create' }
+  | { mode: 'edit'; student: Student }
+  | { mode: 'create-account'; student: Student }
+
+export interface CreateAccountFormValues {
+  email: string
+  password: string
+}
 
 export function useStudentsPage() {
   const [page, setPage] = useState(1)
@@ -19,6 +29,7 @@ export function useStudentsPage() {
   const createStudent = useCreateStudent()
   const updateStudent = useUpdateStudent()
   const deactivateStudent = useDeactivateStudent()
+  const createStudentAccount = useCreateStudentAccount()
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
@@ -32,6 +43,7 @@ export function useStudentsPage() {
 
   const openCreateModal = () => setModal({ mode: 'create' })
   const openEditModal = (student: Student) => setModal({ mode: 'edit', student })
+  const openCreateAccountModal = (student: Student) => setModal({ mode: 'create-account', student })
   const closeModal = () => setModal({ mode: 'closed' })
 
   const handleCreateSubmit = (values: StudentFormValues) => {
@@ -47,6 +59,10 @@ export function useStudentsPage() {
     deactivateStudent.mutate(id)
   }
 
+  const handleCreateAccountSubmit = (id: string) => (values: CreateAccountFormValues) => {
+    createStudentAccount.mutate({ id, ...values }, { onSuccess: closeModal })
+  }
+
   return {
     students: data?.items ?? [],
     page,
@@ -57,14 +73,17 @@ export function useStudentsPage() {
     status,
     modal,
     isSaving: createStudent.isPending || updateStudent.isPending,
+    isCreatingAccount: createStudentAccount.isPending,
     handleSearchChange,
     handleStatusChange,
     setPage,
     openCreateModal,
     openEditModal,
+    openCreateAccountModal,
     closeModal,
     handleCreateSubmit,
     handleEditSubmit,
+    handleCreateAccountSubmit,
     handleDeactivate,
   }
 }

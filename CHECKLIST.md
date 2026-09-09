@@ -29,12 +29,10 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 
 ## Aluno
 
-- [ ] Conta de login própria (decisão registrada: Admin agenda em nome do aluno; aluno não autentica neste projeto)
-- [ ] Agendar aula (self-service)
-- [ ] Ver minha agenda / histórico
-- [ ] Editar o próprio perfil
-
-Toda a área do Aluno acima fica como placeholder sem mock — decisão confirmada em 2026-09-08: como o aluno não tem conta de login neste projeto, essas telas não têm fluxo real de acesso para demonstrar, então não valem o esforço de simular.
+- [x] Conta de login própria — `student-self-service`. Decisão anterior revertida em 2026-09-09: Admin concede acesso a um aluno já cadastrado via "Criar acesso" (`POST /students/:id/create-account`), não é auto-cadastro
+- [x] Agendar aula (self-service) — `student-self-service`. `GET /availability/slots`/`POST /appointments` escopados por aluno no próprio servidor (aluno nunca escolhe a si mesmo nem a categoria — sempre resolvidos a partir da própria conta), reaproveitando o mesmo motor de agendamento do Admin
+- [x] Ver minha agenda / histórico — `student-self-service`. Mesma fonte (`GET /appointments`, escopada por aluno), dividida no cliente por data (futuro/passado), sem endpoint novo
+- [x] Editar o próprio perfil — `student-self-service`. Real: `GET/PATCH /students/me`, escopo mínimo (só telefone editável; nome/documento/categoria/status continuam só-Admin), mesmo padrão de `instructor-edit-profile`
 
 ## Transversais
 

@@ -26,7 +26,7 @@ db.exec('PRAGMA journal_mode = WAL;')
 
 runMigrations(db, MIGRATIONS_DIR)
 await seedDemoUser(db)
-seedDemoStudents(db)
+await seedDemoStudents(db)
 seedDemoVehicles(db)
 await seedDemoInstructors(db)
 seedDemoAppointments(db)
