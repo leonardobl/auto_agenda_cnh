@@ -129,7 +129,9 @@ Copie esse link para o navegador para concluir a redefinição de senha. A respo
 
 ### Testando o agendamento (Admin > Agenda)
 
-Depois de logar como Admin, acesse **Agenda** no menu: selecione um aluno (a categoria é preenchida automaticamente a partir do cadastro dele), ajuste o período e a duração, clique em **Buscar horários** e depois em **Reservar** em qualquer horário da lista — a busca já considera horário de funcionamento, antecedência mínima e conflitos reais de aluno/instrutor/veículo. Configurações como horário de funcionamento e antecedência são constantes fixas no back-end (`apps/api/src/modules/appointments/appointmentService.ts`) nesta versão, não uma tela administrativa — ver "Sobre o escopo deste projeto" acima.
+Depois de logar como Admin, acesse **Agenda** no menu: selecione um aluno (a categoria é preenchida automaticamente a partir do cadastro dele), ajuste o período e a duração, clique em **Buscar horários** e depois em **Reservar** em qualquer horário da lista — a busca já considera horário de funcionamento, antecedência mínima, disponibilidade declarada do instrutor e conflitos reais de aluno/instrutor/veículo. Configurações como horário de funcionamento e antecedência são constantes fixas no back-end (`apps/api/src/modules/appointments/appointmentService.ts`) nesta versão, não uma tela administrativa — ver "Sobre o escopo deste projeto" acima.
+
+Os dois instrutores de demonstração já vêm com disponibilidade semanal semeada (segunda a sexta, 08:00–18:00 UTC — sem provedor de fuso horário, os horários exibidos na interface seguem o fuso do navegador). Um instrutor sem nenhuma janela cadastrada nunca é oferecido para agendamento. Para testar isso: faça login como instrutor (`instrutor1@autoagenda.local` / `Demo@123`), acesse **Disponibilidade** no menu, cadastre uma nova janela semanal ou um bloqueio pontual (com motivo) e volte para Admin > Agenda para ver a busca refletir a mudança.
 
 ## Comandos
 

@@ -2,6 +2,17 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-09-11
+
+### Adicionado
+
+- Disponibilidade do instrutor: cada instrutor (ou o Admin em seu nome) pode declarar janelas semanais de disponibilidade e bloqueios pontuais (`GET/POST /instructors/:id/availability`, `GET/POST /instructors/:id/blocks`). Tela real em Instrutor > Disponibilidade.
+- Os dois instrutores de demonstração já vêm com disponibilidade semanal semeada (segunda a sexta, 08:00–18:00).
+
+### Alterado
+
+- A busca e a reserva de aulas agora respeitam a disponibilidade declarada do instrutor: um instrutor sem nenhuma janela cadastrada nunca é oferecido, e um bloqueio exclui o instrutor no período correspondente — substituindo a simplificação anterior de que todo instrutor ativo estava sempre disponível.
+
 ## 2026-09-09
 
 ### Adicionado

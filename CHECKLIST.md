@@ -24,7 +24,7 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 ## Instrutor
 
 - [x] Ver a própria agenda — `instructor-schedule`. Somente leitura (sem reagendar/cancelar/confirmar); `GET /appointments` escopado por instrutor no próprio servidor, reaproveitando o mesmo endpoint do Admin
-- [ ] Disponibilidade semanal / bloqueios (deliberadamente fora de escopo — ver Non-Goals de `appointment-scheduling`)
+- [x] Disponibilidade semanal / bloqueios — `instructor-availability`. Real: `GET/POST /instructors/:id/availability` e `/blocks` (Admin/próprio instrutor); a busca/reserva de aulas agora respeita janelas semanais e bloqueios (instrutor sem janela configurada nunca é oferecido); sem editar/excluir (só GET/POST, conforme `docs/04`)
 - [x] Editar o próprio perfil — `instructor-edit-profile`. Real: `GET/PATCH /instructors/me`, escopo mínimo (só telefone editável; nome/documento/registro/status continuam só-Admin)
 
 ## Aluno

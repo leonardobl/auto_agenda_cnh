@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { hashPassword } from '../src/shared/passwordHash.ts'
 import { createStudentRepository } from '../src/repositories/studentRepository.ts'
 import { createInstructorRepository } from '../src/repositories/instructorRepository.ts'
+import { createInstructorAvailabilityRepository } from '../src/repositories/instructorAvailabilityRepository.ts'
+import { createInstructorBlockRepository } from '../src/repositories/instructorBlockRepository.ts'
 import { createVehicleRepository } from '../src/repositories/vehicleRepository.ts'
 import { createAppointmentRepository } from '../src/repositories/appointmentRepository.ts'
 import { createAppointmentService } from '../src/modules/appointments/appointmentService.ts'
@@ -134,9 +136,18 @@ const DEMO_INSTRUCTORS = [
   },
 ] as const
 
+// Monday-Friday, matching appointmentService.ts's BUSINESS_HOURS_START/END_HOUR —
+// keeps the existing scheduling demo working now that "no declared availability"
+// means "never available" instead of "always available" (instructor-availability).
+const DEMO_AVAILABILITY_WEEKDAYS = [1, 2, 3, 4, 5]
+const DEMO_AVAILABILITY_START_TIME = '08:00'
+const DEMO_AVAILABILITY_END_TIME = '18:00'
+
 export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
   const existing = db.prepare('SELECT id FROM instructor LIMIT 1').get()
   if (existing) return
+
+  const instructorAvailabilityRepository = createInstructorAvailabilityRepository(db)
 
   for (const instructor of DEMO_INSTRUCTORS) {
     const passwordHash = await hashPassword(DEMO_INSTRUCTOR_PASSWORD)
@@ -147,20 +158,33 @@ export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
        VALUES (?, ?, ?, 'INSTRUCTOR', 'ACTIVE')`,
     ).run(userId, instructor.email, passwordHash)
 
+    const instructorId = randomUUID()
     db.prepare(
       `INSERT INTO instructor (id, user_id, full_name, document, credential_number, phone, status)
        VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')`,
     ).run(
-      randomUUID(),
+      instructorId,
       userId,
       instructor.fullName,
       instructor.document,
       instructor.credentialNumber,
       instructor.phone,
     )
+
+    for (const weekday of DEMO_AVAILABILITY_WEEKDAYS) {
+      instructorAvailabilityRepository.create({
+        id: randomUUID(),
+        instructorId,
+        weekday,
+        startTime: DEMO_AVAILABILITY_START_TIME,
+        endTime: DEMO_AVAILABILITY_END_TIME,
+      })
+    }
   }
 
-  console.log(`Seeded ${DEMO_INSTRUCTORS.length} demo instructors`)
+  console.log(
+    `Seeded ${DEMO_INSTRUCTORS.length} demo instructors with weekly availability (Mon-Fri, ${DEMO_AVAILABILITY_START_TIME}-${DEMO_AVAILABILITY_END_TIME})`,
+  )
 }
 
 export function seedDemoAppointments(db: DatabaseSync): void {
@@ -190,11 +214,18 @@ export function seedDemoAppointments(db: DatabaseSync): void {
     appointmentRepository: createAppointmentRepository(db),
     studentRepository: createStudentRepository(db),
     instructorRepository: createInstructorRepository(db),
+    instructorAvailabilityRepository: createInstructorAvailabilityRepository(db),
+    instructorBlockRepository: createInstructorBlockRepository(db),
     vehicleRepository: createVehicleRepository(db),
   })
 
   const startAt = new Date()
   startAt.setUTCDate(startAt.getUTCDate() + 3)
+  // Nudge forward to a weekday — the seeded instructor availability (Mon-Fri) no
+  // longer covers every day, so "+3 days" alone could land on a weekend.
+  while (startAt.getUTCDay() === 0 || startAt.getUTCDay() === 6) {
+    startAt.setUTCDate(startAt.getUTCDate() + 1)
+  }
   startAt.setUTCHours(10, 0, 0, 0)
 
   try {

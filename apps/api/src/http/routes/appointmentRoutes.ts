@@ -4,6 +4,8 @@ import { createUserRepository } from '../../repositories/userRepository.ts'
 import { createSessionRepository } from '../../repositories/sessionRepository.ts'
 import { createStudentRepository } from '../../repositories/studentRepository.ts'
 import { createInstructorRepository } from '../../repositories/instructorRepository.ts'
+import { createInstructorAvailabilityRepository } from '../../repositories/instructorAvailabilityRepository.ts'
+import { createInstructorBlockRepository } from '../../repositories/instructorBlockRepository.ts'
 import { createVehicleRepository } from '../../repositories/vehicleRepository.ts'
 import { createAppointmentRepository } from '../../repositories/appointmentRepository.ts'
 import { createAppointmentService } from '../../modules/appointments/appointmentService.ts'
@@ -22,6 +24,8 @@ export function appointmentRoutes({ db }: AppointmentRoutesDeps): Router {
   const sessionRepository = createSessionRepository(db)
   const studentRepository = createStudentRepository(db)
   const instructorRepository = createInstructorRepository(db)
+  const instructorAvailabilityRepository = createInstructorAvailabilityRepository(db)
+  const instructorBlockRepository = createInstructorBlockRepository(db)
   const vehicleRepository = createVehicleRepository(db)
   const appointmentRepository = createAppointmentRepository(db)
   const appointmentService = createAppointmentService({
@@ -29,6 +33,8 @@ export function appointmentRoutes({ db }: AppointmentRoutesDeps): Router {
     appointmentRepository,
     studentRepository,
     instructorRepository,
+    instructorAvailabilityRepository,
+    instructorBlockRepository,
     vehicleRepository,
   })
   const appointmentController = createAppointmentController({ appointmentService })

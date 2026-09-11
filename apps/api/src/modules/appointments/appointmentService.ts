@@ -4,6 +4,8 @@ import { ApiError } from '../../shared/ApiError.ts'
 import type { AppointmentRepository, AppointmentRecord } from '../../repositories/appointmentRepository.ts'
 import type { StudentRepository } from '../../repositories/studentRepository.ts'
 import type { InstructorRepository } from '../../repositories/instructorRepository.ts'
+import type { InstructorAvailabilityRepository } from '../../repositories/instructorAvailabilityRepository.ts'
+import type { InstructorBlockRepository } from '../../repositories/instructorBlockRepository.ts'
 import type { VehicleRepository } from '../../repositories/vehicleRepository.ts'
 
 // Stand-in for a future `system_setting` table (see the appointment-scheduling
@@ -75,6 +77,8 @@ interface AppointmentServiceDeps {
   appointmentRepository: AppointmentRepository
   studentRepository: StudentRepository
   instructorRepository: InstructorRepository
+  instructorAvailabilityRepository: InstructorAvailabilityRepository
+  instructorBlockRepository: InstructorBlockRepository
   vehicleRepository: VehicleRepository
 }
 
@@ -116,13 +120,39 @@ function meetsAdvanceNotice(start: Date, now: Date): boolean {
   return start.getTime() - now.getTime() >= MIN_ADVANCE_MINUTES * 60 * 1000
 }
 
+function toMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
 export function createAppointmentService({
   db,
   appointmentRepository,
   studentRepository,
   instructorRepository,
+  instructorAvailabilityRepository,
+  instructorBlockRepository,
   vehicleRepository,
 }: AppointmentServiceDeps): AppointmentService {
+  // An instructor is available only inside a declared weekly window (weekday +
+  // time-of-day, same UTC-only simplification as isWithinBusinessHours) and
+  // outside any block — no declared windows means never available, a deliberate
+  // change from this project's earlier "every active instructor is always
+  // available" simplification (see instructor-availability's design.md).
+  function isInstructorAvailable(instructorId: string, start: Date, end: Date): boolean {
+    const weekday = start.getUTCDay()
+    const startMinutes = start.getUTCHours() * 60 + start.getUTCMinutes()
+    const endMinutes = end.getUTCHours() * 60 + end.getUTCMinutes()
+
+    const windows = instructorAvailabilityRepository.findActiveByInstructorAndWeekday(instructorId, weekday)
+    const withinWindow = windows.some(
+      (window) => startMinutes >= toMinutes(window.start_time) && endMinutes <= toMinutes(window.end_time),
+    )
+    if (!withinWindow) return false
+
+    return !instructorBlockRepository.isBlocked(instructorId, start.toISOString(), end.toISOString())
+  }
+
   return {
     searchSlots({ studentId, categoryId, dateFrom, dateTo, durationMinutes }, requester) {
       // A STUDENT caller can only ever search for themselves, in their own registered
@@ -198,8 +228,10 @@ export function createAppointmentService({
           continue
         }
 
-        const instructor = candidateInstructors.find((candidate) =>
-          appointmentRepository.isInstructorFree(candidate.id, startIso, endIso),
+        const instructor = candidateInstructors.find(
+          (candidate) =>
+            isInstructorAvailable(candidate.id, start, end) &&
+            appointmentRepository.isInstructorFree(candidate.id, startIso, endIso),
         )
         if (!instructor) continue
 
@@ -284,6 +316,9 @@ export function createAppointmentService({
       }
       if (!meetsAdvanceNotice(start, new Date())) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Antecedência mínima não respeitada.')
+      }
+      if (!isInstructorAvailable(instructorId, start, end)) {
+        throw new ApiError(400, 'VALIDATION_ERROR', 'Instrutor indisponível nesse horário.')
       }
 
       const startIso = start.toISOString()
