@@ -34,6 +34,10 @@ Todas as mudanças relevantes deste projeto são documentadas neste arquivo, org
 - Admin > Início: painel com contagens reais de alunos, instrutores, veículos e aulas agendadas, além dos próximos agendamentos — sem endpoint novo, agregando dados já servidos pelas telas existentes.
 - Admin > Configurações, Auditoria e Relatórios (esta última nova, com item no menu): últimas telas pendentes do Admin, implementadas como simulações de interface — sem endpoint novo em `apps/api`. Configurações exibe os valores reais do algoritmo de agendamento; Auditoria mostra eventos de exemplo; Relatórios simula uma exportação.
 
+### Corrigido
+
+- Botão "Sair" (Admin, Instrutor e Aluno): estava travado em um aviso de "ainda não disponível" mesmo com o back-end de logout já funcionando; agora encerra a sessão de verdade e volta para a tela de login.
+
 ## 2026-08-29
 
 ### Adicionado
