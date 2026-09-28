@@ -2,6 +2,8 @@
 
 Aplicação web para agendamento de aulas práticas de autoescola (CNH) — projeto acadêmico (Projeto Integrador II). Especificação completa em [docs/](docs/).
 
+A raiz (`/`) é a página institucional pública da autoescola fictícia (Auto Escola Rota Certa) — sobre, serviços, galeria e contato. O botão "Entrar" no cabeçalho leva ao login de cada perfil (Admin, Instrutor, Aluno).
+
 ## Sobre o escopo deste projeto
 
 Este é um entregável acadêmico, não um produto em produção — o objetivo é demonstrar entendimento dos requisitos e um funcionamento real das partes centrais, não implementar 100% do que a especificação (`docs/`) descreve. Algumas peças de apoio são deliberadamente simplificadas ou fixadas em código (ex.: configurações de horário/duração/antecedência do agendamento são constantes no código, não uma tela administrativa) em vez de ganharem CRUD/tela próprios — cada decisão desse tipo fica registrada no `design.md` da change correspondente (arquivado em `openspec/changes/archive/`, fora do controle de versão) e, quando relevante para quem só olha o código, também aqui e em [CLAUDE.md](CLAUDE.md). O critério é sempre o mesmo: o que está implementado deve funcionar de verdade (login, cadastros, o motor de agendamento), mesmo que nem toda tela/fluxo secundário da especificação exista.
@@ -13,18 +15,17 @@ Este projeto não implementa um back-end de verdade para toda tela/endpoint que 
 **Real, com endpoint funcional em `apps/api`:**
 - Autenticação (login/logout, recuperação de senha)
 - Gestão de alunos, veículos e instrutores (Admin)
-- Agendamento de aulas (busca de horários + reserva, com detecção real de conflito)
+- Agendamento de aulas (busca de horários + reserva, com detecção real de conflito de aluno/instrutor/veículo, respeitando a disponibilidade declarada do instrutor)
 - Agenda do instrutor (somente leitura, escopada por instrutor)
-- Instrutor > Editar perfil (escopo mínimo: só telefone)
+- Instrutor > Editar perfil (escopo mínimo: só telefone) e Disponibilidade (janelas semanais e bloqueios pontuais)
 - Admin > Painel/dashboard (agrega dados já existentes via `/students`, `/instructors`, `/vehicles`, `/appointments`, sem endpoint novo)
+- Conta de login do aluno (concedida pelo Admin) e área completa do Aluno: perfil próprio, agendamento self-service, minha agenda e histórico
 
 **Simulado apenas na interface (sem endpoint em `apps/api`), o código sinaliza com um comentário `// mocked: ...` no ponto de chamada:**
 - Admin > Configurações — exibe os valores reais do algoritmo de agendamento; "salvar" não persiste
 - Admin > Auditoria — tabela com eventos fictícios fixos, sem consulta real
 - Admin > Relatórios — botão de exportação simula sucesso, nenhum arquivo é gerado
-
-**Não implementado, sem mock:**
-- Área do Aluno (login, agendar aula, minha agenda, histórico, perfil) — deliberadamente não implementada: neste projeto o aluno não tem conta de login (o Admin agenda em nome dele), então essas telas ficam como placeholder, sem mock, por não terem fluxo real de acesso para demonstrar
+- Página institucional (`/`) — site público de divulgação da autoescola: texto e dados de contato fictícios, galeria com ilustrações locais em vez de fotos reais, links de WhatsApp/redes sociais no formato real mas com número/handles fictícios; nenhum formulário é submetido a um back-end
 
 ## Estrutura do repositório
 
@@ -37,6 +38,27 @@ packages/contracts/   # schemas/tipos compartilhados entre web e api — ainda n
 docs/                 # especificação acadêmica (DOC-00 a DOC-10)
 infra/                # configuração de deploy/Docker — ainda não implementado
 ```
+
+## Arquitetura do back-end (MVC)
+
+`apps/api` segue o padrão **MVC** (Model – View – Controller, com um Router à frente do Controller). Como a API responde JSON e não HTML, a **View** é a camada que monta o corpo da resposta.
+
+```
+Usuário ──requisição HTTP──▶ Router ──▶ Controller ◀──dados──▶ Model ──▶ SQLite
+   ▲                                        │
+   └────────────── JSON ◀──── View ◀────────┘
+```
+
+| Camada MVC | Diretório (`apps/api/src/`) | O que faz |
+| ---------- | --------------------------- | --------- |
+| **Router** | `routes/` (+ `middlewares/`) | Associa método + caminho a middlewares de autenticação/perfil (`requireAuth`, `requireRole`) e a um método do controller. |
+| **Controller** | `controllers/` | Lê a requisição (params, query, body, usuário logado), chama o Model e escolhe a View que monta a resposta. Não contém regra de negócio nem SQL. |
+| **Model** | `models/` | `*Model.ts`: acesso ao banco (SQL puro, um por tabela). `*Service.ts`: regras de negócio, validações e transações de cada caso de uso (ex.: detecção de conflito de horário no agendamento). |
+| **View** | `views/` | Funções puras que definem o JSON devolvido (`presentStudent`, `presentPage`, `presentError`…), listando cada campo explicitamente — nada sai da API sem estar nomeado aqui. |
+
+Exemplo (`GET /students/:id`): `routes/studentRoutes.ts` → `controllers/studentController.ts` → `models/studentService.ts` (valida) → `models/studentModel.ts` (SQL) → `views/studentView.ts` (JSON).
+
+Os testes do back-end (`yarn workspace @auto-agenda-cnh/api test`) sobem a aplicação real sobre um SQLite em memória, chamam cada endpoint e comparam a resposta com um *snapshot* — qualquer mudança de comportamento HTTP faz o teste falhar.
 
 ## Stack
 
@@ -151,6 +173,7 @@ yarn workspace @auto-agenda-cnh/api dev       # inicia a API em modo desenvolvim
 yarn workspace @auto-agenda-cnh/api start     # inicia a API em modo produção
 yarn workspace @auto-agenda-cnh/api build     # type-check (tsc --noEmit) — sem bundler, não gera nada
 yarn workspace @auto-agenda-cnh/api lint      # roda o ESLint no back-end
+yarn workspace @auto-agenda-cnh/api test      # roda os testes do back-end (node:test, SQLite em memória)
 yarn workspace @auto-agenda-cnh/api db:setup  # cria/verifica o banco SQLite local (roda automaticamente após yarn install)
 ```
 

@@ -1,0 +1,2061 @@
+exports[`404 for an unknown route 1`] = `
+[
+  {
+    "status": 404,
+    "body": {
+      "code": "ROUTE_NOT_FOUND",
+      "message": "Rota não encontrada.",
+      "correlationId": "<id:1>"
+    }
+  }
+]
+`;
+
+exports[`appointments: Admin searches and books a slot; the same slot cannot be booked twice 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:40>",
+          "vehiclePlate": "DEF4E56"
+        }
+      ]
+    }
+  },
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:77>",
+      "student_id": "<id:22>",
+      "instructor_id": "<id:47>",
+      "vehicle_id": "<id:40>",
+      "category_id": "<id:13>",
+      "start_at": "<timestamp>",
+      "end_at": "<timestamp>",
+      "status": "AGENDADA",
+      "cancellation_reason": null,
+      "notes": null,
+      "created_by": "<id:5>",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "student_full_name": "Bruno Carvalho Lima",
+      "instructor_full_name": "Fábio Ramos Teixeira",
+      "vehicle_plate": "DEF4E56"
+    }
+  },
+  {
+    "status": 409,
+    "body": {
+      "code": "APPOINTMENT_STUDENT_CONFLICT",
+      "message": "O aluno já possui uma aula nesse horário.",
+      "correlationId": "<id:78>"
+    }
+  },
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Aluno, instrutor, veículo, categoria e horário são obrigatórios.",
+      "correlationId": "<id:79>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:80>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:72>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        },
+        {
+          "id": "<id:77>",
+          "student_id": "<id:22>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:40>",
+          "category_id": "<id:13>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Bruno Carvalho Lima",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "DEF4E56"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 2
+    }
+  }
+]
+`;
+
+exports[`appointments: Student books only for themselves, in their own category 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        }
+      ]
+    }
+  },
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:81>",
+      "student_id": "<id:21>",
+      "instructor_id": "<id:47>",
+      "vehicle_id": "<id:39>",
+      "category_id": "<id:15>",
+      "start_at": "<timestamp>",
+      "end_at": "<timestamp>",
+      "status": "AGENDADA",
+      "cancellation_reason": null,
+      "notes": null,
+      "created_by": "<id:6>",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "student_full_name": "Ana Beatriz Souza",
+      "instructor_full_name": "Fábio Ramos Teixeira",
+      "vehicle_plate": "ABC1D23"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:72>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        },
+        {
+          "id": "<id:81>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:6>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 2
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:72>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        },
+        {
+          "id": "<id:77>",
+          "student_id": "<id:22>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:40>",
+          "category_id": "<id:13>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Bruno Carvalho Lima",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "DEF4E56"
+        },
+        {
+          "id": "<id:81>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:6>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 3
+    }
+  }
+]
+`;
+
+exports[`appointments: an instructor block removes their slots 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:49>",
+          "instructorName": "Juliana Castro Mendes",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:49>",
+          "instructorName": "Juliana Castro Mendes",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:49>",
+          "instructorName": "Juliana Castro Mendes",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:49>",
+          "instructorName": "Juliana Castro Mendes",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:49>",
+          "instructorName": "Juliana Castro Mendes",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        },
+        {
+          "startAt": "<timestamp>",
+          "endAt": "<timestamp>",
+          "instructorId": "<id:47>",
+          "instructorName": "Fábio Ramos Teixeira",
+          "vehicleId": "<id:39>",
+          "vehiclePlate": "ABC1D23"
+        }
+      ]
+    }
+  }
+]
+`;
+
+exports[`appointments: list is scoped per profile 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:72>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 1
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:72>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        }
+      ],
+      "page": 1,
+      "pageSize": 1,
+      "total": 1
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:72>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 1
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:72>",
+          "student_id": "<id:21>",
+          "instructor_id": "<id:47>",
+          "vehicle_id": "<id:39>",
+          "category_id": "<id:15>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "status": "AGENDADA",
+          "cancellation_reason": null,
+          "notes": null,
+          "created_by": "<id:5>",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "student_full_name": "Ana Beatriz Souza",
+          "instructor_full_name": "Fábio Ramos Teixeira",
+          "vehicle_plate": "ABC1D23"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 1
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [],
+      "page": 1,
+      "pageSize": 10,
+      "total": 0
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:73>"
+    }
+  }
+]
+`;
+
+exports[`appointments: slot search validation and permissions 1`] = `
+[
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Informe o aluno.",
+      "correlationId": "<id:74>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:75>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:76>"
+    }
+  }
+]
+`;
+
+exports[`auth: GET /me and unauthenticated access 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:5>",
+      "email": "admin@autoagenda.local",
+      "role": "ADMIN",
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:6>",
+      "email": "aluno1@autoagenda.local",
+      "role": "STUDENT",
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:7>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:8>"
+    }
+  }
+]
+`;
+
+exports[`auth: forgot-password answers identically for known and unknown e-mails 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "message": "Se o e-mail informado existir, você receberá instruções para redefinir sua senha."
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "message": "Se o e-mail informado existir, você receberá instruções para redefinir sua senha."
+    }
+  }
+]
+`;
+
+exports[`auth: login failures share one generic message 1`] = `
+[
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "E-mail ou senha inválidos.",
+      "correlationId": "<id:2>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "E-mail ou senha inválidos.",
+      "correlationId": "<id:3>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "E-mail ou senha inválidos.",
+      "correlationId": "<id:4>"
+    }
+  }
+]
+`;
+
+exports[`auth: logout revokes the session 1`] = `
+[
+  {
+    "status": 204,
+    "body": null
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:82>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:83>"
+    }
+  }
+]
+`;
+
+exports[`auth: reset-password rejects a bad token, accepts a real one and revokes sessions 1`] = `
+[
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Link inválido ou expirado.",
+      "correlationId": "<id:9>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "message": "Senha redefinida com sucesso."
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:10>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "E-mail ou senha inválidos.",
+      "correlationId": "<id:11>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "token": "<id:12>",
+      "user": {
+        "id": "<id:6>",
+        "email": "aluno1@autoagenda.local",
+        "role": "STUDENT",
+        "status": "ACTIVE"
+      }
+    }
+  }
+]
+`;
+
+exports[`health 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "status": "ok"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "status": "ok"
+    }
+  }
+]
+`;
+
+exports[`instructors: availability windows and blocks (Admin, owner, other instructor) 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:59>",
+          "instructor_id": "<id:47>",
+          "weekday": 1,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:60>",
+          "instructor_id": "<id:47>",
+          "weekday": 2,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:61>",
+          "instructor_id": "<id:47>",
+          "weekday": 3,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:62>",
+          "instructor_id": "<id:47>",
+          "weekday": 4,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:63>",
+          "instructor_id": "<id:47>",
+          "weekday": 5,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        }
+      ]
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:59>",
+          "instructor_id": "<id:47>",
+          "weekday": 1,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:60>",
+          "instructor_id": "<id:47>",
+          "weekday": 2,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:61>",
+          "instructor_id": "<id:47>",
+          "weekday": 3,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:62>",
+          "instructor_id": "<id:47>",
+          "weekday": 4,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        },
+        {
+          "id": "<id:63>",
+          "instructor_id": "<id:47>",
+          "weekday": 5,
+          "start_time": "08:00",
+          "end_time": "18:00",
+          "active": 1,
+          "created_at": "<timestamp>"
+        }
+      ]
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:64>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:65>"
+    }
+  },
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:66>",
+      "instructor_id": "<id:47>",
+      "weekday": 6,
+      "start_time": "08:00",
+      "end_time": "12:00",
+      "active": 1,
+      "created_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:67>"
+    }
+  },
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Informe um dia da semana (0-6), horário inicial e horário final (depois do inicial).",
+      "correlationId": "<id:68>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": []
+    }
+  },
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:69>",
+      "instructor_id": "<id:47>",
+      "start_at": "<timestamp>",
+      "end_at": "<timestamp>",
+      "reason": "Consulta médica",
+      "created_by": "<id:48>",
+      "created_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Intervalo de bloqueio inválido.",
+      "correlationId": "<id:70>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:69>",
+          "instructor_id": "<id:47>",
+          "start_at": "<timestamp>",
+          "end_at": "<timestamp>",
+          "reason": "Consulta médica",
+          "created_by": "<id:48>",
+          "created_at": "<timestamp>"
+        }
+      ]
+    }
+  },
+  {
+    "status": 404,
+    "body": {
+      "code": "INSTRUCTOR_NOT_FOUND",
+      "message": "Instrutor não encontrado.",
+      "correlationId": "<id:71>"
+    }
+  }
+]
+`;
+
+exports[`instructors: list, register, duplicate, get, update, permissions 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:47>",
+          "user_id": "<id:48>",
+          "full_name": "Fábio Ramos Teixeira",
+          "document": "98765432101",
+          "credential_number": "CRED-0001",
+          "phone": "(11) 93456-7801",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "email": "instrutor1@autoagenda.local"
+        },
+        {
+          "id": "<id:49>",
+          "user_id": "<id:50>",
+          "full_name": "Juliana Castro Mendes",
+          "document": "98765432102",
+          "credential_number": "CRED-0002",
+          "phone": "(11) 93456-7802",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>",
+          "email": "instrutor2@autoagenda.local"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 2
+    }
+  },
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:51>",
+      "user_id": "<id:52>",
+      "full_name": "Marcos Vieira",
+      "document": "55566677788",
+      "credential_number": "CRED-0003",
+      "phone": "(11) 93456-7803",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "email": "instrutor3@autoagenda.local"
+    }
+  },
+  {
+    "status": 409,
+    "body": {
+      "code": "INSTRUCTOR_EMAIL_CONFLICT",
+      "message": "Já existe uma conta com este e-mail.",
+      "correlationId": "<id:53>"
+    }
+  },
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "E-mail, senha (mínimo 8 caracteres), nome completo, registro profissional e telefone são obrigatórios.",
+      "correlationId": "<id:54>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:55>"
+    }
+  },
+  {
+    "status": 404,
+    "body": {
+      "code": "INSTRUCTOR_NOT_FOUND",
+      "message": "Instrutor não encontrado.",
+      "correlationId": "<id:56>"
+    }
+  }
+]
+`;
+
+exports[`instructors: list, register, duplicate, get, update, permissions 2`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:51>",
+      "user_id": "<id:52>",
+      "full_name": "Marcos Vieira",
+      "document": "55566677788",
+      "credential_number": "CRED-0003",
+      "phone": "(11) 93456-7803",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "email": "instrutor3@autoagenda.local"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:51>",
+      "user_id": "<id:52>",
+      "full_name": "Marcos Vieira",
+      "document": "55566677788",
+      "credential_number": "CRED-0003",
+      "phone": "(11) 90000-1111",
+      "status": "INACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "email": "instrutor3@autoagenda.local"
+    }
+  }
+]
+`;
+
+exports[`instructors: self-service /instructors/me (only phone is editable) 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:47>",
+      "user_id": "<id:48>",
+      "full_name": "Fábio Ramos Teixeira",
+      "document": "98765432101",
+      "credential_number": "CRED-0001",
+      "phone": "(11) 93456-7801",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "email": "instrutor1@autoagenda.local"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:47>",
+      "user_id": "<id:48>",
+      "full_name": "Fábio Ramos Teixeira",
+      "document": "98765432101",
+      "credential_number": "CRED-0001",
+      "phone": "(11) 97777-0000",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>",
+      "email": "instrutor1@autoagenda.local"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:57>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:58>"
+    }
+  }
+]
+`;
+
+exports[`students: create login account, second attempt conflicts 1`] = `
+[
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:28>",
+      "user_id": "<id:34>",
+      "full_name": "Fernanda Lopes Silva",
+      "document": "11122233344",
+      "phone": "(11) 90000-9999",
+      "birth_date": "2000-05-10",
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 409,
+    "body": {
+      "code": "STUDENT_ALREADY_HAS_ACCOUNT",
+      "message": "Este aluno já possui uma conta de login.",
+      "correlationId": "<id:35>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "token": "<id:36>",
+      "user": {
+        "id": "<id:34>",
+        "email": "fernanda@autoagenda.local",
+        "role": "STUDENT",
+        "status": "ACTIVE"
+      }
+    }
+  }
+]
+`;
+
+exports[`students: deactivate 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:28>",
+      "user_id": "<id:34>",
+      "full_name": "Fernanda Lopes Silva",
+      "document": "11122233344",
+      "phone": "(11) 90000-9999",
+      "birth_date": "2000-05-10",
+      "category_id": "<id:15>",
+      "status": "INACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:28>",
+          "user_id": "<id:34>",
+          "full_name": "Fernanda Lopes Silva",
+          "document": "11122233344",
+          "phone": "(11) 90000-9999",
+          "birth_date": "2000-05-10",
+          "category_id": "<id:15>",
+          "status": "INACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 1
+    }
+  }
+]
+`;
+
+exports[`students: get, update, not found 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:28>",
+      "user_id": null,
+      "full_name": "Fernanda Lopes",
+      "document": "11122233344",
+      "phone": "(11) 90000-0001",
+      "birth_date": "2000-05-10",
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:28>",
+      "user_id": null,
+      "full_name": "Fernanda Lopes Silva",
+      "document": "11122233344",
+      "phone": "(11) 90000-9999",
+      "birth_date": "2000-05-10",
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 404,
+    "body": {
+      "code": "STUDENT_NOT_FOUND",
+      "message": "Aluno não encontrado.",
+      "correlationId": "<id:32>"
+    }
+  },
+  {
+    "status": 404,
+    "body": {
+      "code": "STUDENT_NOT_FOUND",
+      "message": "Aluno não encontrado.",
+      "correlationId": "<id:33>"
+    }
+  }
+]
+`;
+
+exports[`students: license categories (Admin and Student, not Instructor) 1`] = `
+[
+  {
+    "status": 200,
+    "body": [
+      {
+        "id": "<id:13>",
+        "code": "A",
+        "name": "Motocicletas"
+      },
+      {
+        "id": "<id:14>",
+        "code": "AB",
+        "name": "Automóveis e motocicletas"
+      },
+      {
+        "id": "<id:15>",
+        "code": "B",
+        "name": "Automóveis"
+      },
+      {
+        "id": "<id:16>",
+        "code": "C",
+        "name": "Veículos de carga"
+      },
+      {
+        "id": "<id:17>",
+        "code": "D",
+        "name": "Veículos de passageiros"
+      },
+      {
+        "id": "<id:18>",
+        "code": "E",
+        "name": "Combinação de veículos de carga"
+      }
+    ]
+  },
+  {
+    "status": 200,
+    "body": [
+      {
+        "id": "<id:13>",
+        "code": "A",
+        "name": "Motocicletas"
+      },
+      {
+        "id": "<id:14>",
+        "code": "AB",
+        "name": "Automóveis e motocicletas"
+      },
+      {
+        "id": "<id:15>",
+        "code": "B",
+        "name": "Automóveis"
+      },
+      {
+        "id": "<id:16>",
+        "code": "C",
+        "name": "Veículos de carga"
+      },
+      {
+        "id": "<id:17>",
+        "code": "D",
+        "name": "Veículos de passageiros"
+      },
+      {
+        "id": "<id:18>",
+        "code": "E",
+        "name": "Combinação de veículos de carga"
+      }
+    ]
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:19>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:20>"
+    }
+  }
+]
+`;
+
+exports[`students: list, pagination, search and status filter 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:21>",
+          "user_id": "<id:6>",
+          "full_name": "Ana Beatriz Souza",
+          "document": "12345678901",
+          "phone": "(11) 91234-5601",
+          "birth_date": null,
+          "category_id": "<id:15>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        },
+        {
+          "id": "<id:22>",
+          "user_id": null,
+          "full_name": "Bruno Carvalho Lima",
+          "document": "12345678902",
+          "phone": "(11) 91234-5602",
+          "birth_date": null,
+          "category_id": "<id:13>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        },
+        {
+          "id": "<id:23>",
+          "user_id": null,
+          "full_name": "Camila Ferreira Dias",
+          "document": "12345678903",
+          "phone": "(11) 91234-5603",
+          "birth_date": null,
+          "category_id": "<id:14>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        },
+        {
+          "id": "<id:24>",
+          "user_id": null,
+          "full_name": "Diego Martins Rocha",
+          "document": "12345678904",
+          "phone": "(11) 91234-5604",
+          "birth_date": null,
+          "category_id": "<id:15>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        },
+        {
+          "id": "<id:25>",
+          "user_id": null,
+          "full_name": "Elisa Nogueira Pinto",
+          "document": "12345678905",
+          "phone": "(11) 91234-5605",
+          "birth_date": null,
+          "category_id": "<id:16>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 5
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:23>",
+          "user_id": null,
+          "full_name": "Camila Ferreira Dias",
+          "document": "12345678903",
+          "phone": "(11) 91234-5603",
+          "birth_date": null,
+          "category_id": "<id:14>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        },
+        {
+          "id": "<id:24>",
+          "user_id": null,
+          "full_name": "Diego Martins Rocha",
+          "document": "12345678904",
+          "phone": "(11) 91234-5604",
+          "birth_date": null,
+          "category_id": "<id:15>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        }
+      ],
+      "page": 2,
+      "pageSize": 2,
+      "total": 5
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:21>",
+          "user_id": "<id:6>",
+          "full_name": "Ana Beatriz Souza",
+          "document": "12345678901",
+          "phone": "(11) 91234-5601",
+          "birth_date": null,
+          "category_id": "<id:15>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 1
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [],
+      "page": 1,
+      "pageSize": 10,
+      "total": 0
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:26>"
+    }
+  },
+  {
+    "status": 401,
+    "body": {
+      "code": "AUTHENTICATION_REQUIRED",
+      "message": "Autenticação necessária.",
+      "correlationId": "<id:27>"
+    }
+  }
+]
+`;
+
+exports[`students: register, duplicate document, validation 1`] = `
+[
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:28>",
+      "user_id": null,
+      "full_name": "Fernanda Lopes",
+      "document": "11122233344",
+      "phone": "(11) 90000-0001",
+      "birth_date": "2000-05-10",
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 409,
+    "body": {
+      "code": "STUDENT_DOCUMENT_CONFLICT",
+      "message": "Já existe um aluno com este documento.",
+      "correlationId": "<id:29>"
+    }
+  },
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Nome completo, telefone e categoria são obrigatórios.",
+      "correlationId": "<id:30>"
+    }
+  },
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Categoria de CNH inválida.",
+      "correlationId": "<id:31>"
+    }
+  }
+]
+`;
+
+exports[`students: self-service /students/me (only phone is editable) 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:21>",
+      "user_id": "<id:6>",
+      "full_name": "Ana Beatriz Souza",
+      "document": "12345678901",
+      "phone": "(11) 91234-5601",
+      "birth_date": null,
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:21>",
+      "user_id": "<id:6>",
+      "full_name": "Ana Beatriz Souza",
+      "document": "12345678901",
+      "phone": "(11) 98888-0000",
+      "birth_date": null,
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:37>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:38>"
+    }
+  }
+]
+`;
+
+exports[`vehicles: list, register, duplicate, get, update, permissions 1`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:39>",
+          "plate": "ABC1D23",
+          "brand": "Volkswagen",
+          "model": "Gol",
+          "year": 2020,
+          "category_id": "<id:15>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        },
+        {
+          "id": "<id:40>",
+          "plate": "DEF4E56",
+          "brand": "Honda",
+          "model": "CG 160",
+          "year": 2022,
+          "category_id": "<id:13>",
+          "status": "ACTIVE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        },
+        {
+          "id": "<id:41>",
+          "plate": "GHI7F89",
+          "brand": "Chevrolet",
+          "model": "Onix",
+          "year": 2019,
+          "category_id": "<id:15>",
+          "status": "MAINTENANCE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 3
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "id": "<id:41>",
+          "plate": "GHI7F89",
+          "brand": "Chevrolet",
+          "model": "Onix",
+          "year": 2019,
+          "category_id": "<id:15>",
+          "status": "MAINTENANCE",
+          "created_at": "<timestamp>",
+          "updated_at": "<timestamp>"
+        }
+      ],
+      "page": 1,
+      "pageSize": 10,
+      "total": 1
+    }
+  },
+  {
+    "status": 201,
+    "body": {
+      "id": "<id:42>",
+      "plate": "JKL1M23",
+      "brand": "Fiat",
+      "model": "Argo",
+      "year": 2021,
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 409,
+    "body": {
+      "code": "VEHICLE_PLATE_CONFLICT",
+      "message": "Já existe um veículo com esta placa.",
+      "correlationId": "<id:43>"
+    }
+  },
+  {
+    "status": 400,
+    "body": {
+      "code": "VALIDATION_ERROR",
+      "message": "Placa, marca, modelo, ano e categoria são obrigatórios.",
+      "correlationId": "<id:44>"
+    }
+  },
+  {
+    "status": 403,
+    "body": {
+      "code": "FORBIDDEN",
+      "message": "Você não tem permissão para acessar este recurso.",
+      "correlationId": "<id:45>"
+    }
+  },
+  {
+    "status": 404,
+    "body": {
+      "code": "VEHICLE_NOT_FOUND",
+      "message": "Veículo não encontrado.",
+      "correlationId": "<id:46>"
+    }
+  }
+]
+`;
+
+exports[`vehicles: list, register, duplicate, get, update, permissions 2`] = `
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:42>",
+      "plate": "JKL1M23",
+      "brand": "Fiat",
+      "model": "Argo",
+      "year": 2021,
+      "category_id": "<id:15>",
+      "status": "ACTIVE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  },
+  {
+    "status": 200,
+    "body": {
+      "id": "<id:42>",
+      "plate": "JKL1M23",
+      "brand": "Fiat",
+      "model": "Argo",
+      "year": 2021,
+      "category_id": "<id:15>",
+      "status": "MAINTENANCE",
+      "created_at": "<timestamp>",
+      "updated_at": "<timestamp>"
+    }
+  }
+]
+`;

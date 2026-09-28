@@ -2,6 +2,23 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-09-28
+
+### Alterado
+
+- Back-end reorganizado no padrão MVC, como pede o enunciado do projeto: `routes/` (Router), `controllers/` (Controller), `models/` (Model — acesso ao banco e regras de negócio) e `views/` (View — formato do JSON de resposta). Nenhuma rota nem resposta da API mudou.
+- Documentação atualizada: seção "Arquitetura do back-end (MVC)" no README com o fluxo de uma requisição e a tabela camada → diretório.
+
+### Adicionado
+
+- Testes do back-end (`yarn workspace @auto-agenda-cnh/api test`): suíte que sobe a API sobre um banco em memória, chama todos os endpoints e compara as respostas com um snapshot, garantindo que o comportamento HTTP não muda.
+
+## 2026-09-18
+
+### Adicionado
+
+- Página institucional (`/`): site público de divulgação da autoescola fictícia, substituindo a tela de placeholder — cabeçalho com link para login, hero, seção "sobre" (tradição/experiência), serviços (categorias de CNH), galeria ilustrada, chamada para matrícula (WhatsApp) e rodapé com contato/redes sociais. 100% front-end, sem endpoint novo. Navegação por âncora com rolagem suave, sem esconder o título da seção atrás do cabeçalho fixo.
+
 ## 2026-09-11
 
 ### Adicionado

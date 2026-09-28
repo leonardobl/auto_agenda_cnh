@@ -11,6 +11,8 @@
     "start": "node --env-file-if-exists=.env src/server.ts",
     "build": "tsc --noEmit",
     "lint": "eslint .",
+    "test": "node --test --env-file-if-exists=.env tests/*.test.ts",
+    "test:update-snapshots": "node --test --test-update-snapshots --env-file-if-exists=.env tests/*.test.ts",
     "db:setup": "node scripts/setup-db.ts",
     "postinstall": "node scripts/setup-db.ts"
   },

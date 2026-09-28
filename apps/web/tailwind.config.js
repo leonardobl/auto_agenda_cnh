@@ -11,6 +11,10 @@ export default {
         success: "#15803d",
         warning: "#b45309",
         error: "#b91c1c",
+        // Marketing accent (institutional-landing-page): CTAs/highlights on the public
+        // site only — kept separate from `warning`'s hex-adjacent but semantically
+        // distinct meaning (actual warning UI elsewhere in the app).
+        accent: "#ea580c",
       },
       // DOC-06 §4 spacing scale (4/8/12/16/24/32/48px) and border radius (8–12px) need
       // no extension: Tailwind's default rem-based scale already lands on those exact

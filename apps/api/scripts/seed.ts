@@ -1,13 +1,13 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { randomUUID } from 'node:crypto'
 import { hashPassword } from '../src/shared/passwordHash.ts'
-import { createStudentRepository } from '../src/repositories/studentRepository.ts'
-import { createInstructorRepository } from '../src/repositories/instructorRepository.ts'
-import { createInstructorAvailabilityRepository } from '../src/repositories/instructorAvailabilityRepository.ts'
-import { createInstructorBlockRepository } from '../src/repositories/instructorBlockRepository.ts'
-import { createVehicleRepository } from '../src/repositories/vehicleRepository.ts'
-import { createAppointmentRepository } from '../src/repositories/appointmentRepository.ts'
-import { createAppointmentService } from '../src/modules/appointments/appointmentService.ts'
+import { createStudentModel } from '../src/models/studentModel.ts'
+import { createInstructorModel } from '../src/models/instructorModel.ts'
+import { createInstructorAvailabilityModel } from '../src/models/instructorAvailabilityModel.ts'
+import { createInstructorBlockModel } from '../src/models/instructorBlockModel.ts'
+import { createVehicleModel } from '../src/models/vehicleModel.ts'
+import { createAppointmentModel } from '../src/models/appointmentModel.ts'
+import { createAppointmentService } from '../src/models/appointmentService.ts'
 
 export const DEMO_USER_EMAIL = 'admin@autoagenda.local'
 export const DEMO_USER_PASSWORD = 'Demo@123'
@@ -147,7 +147,7 @@ export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
   const existing = db.prepare('SELECT id FROM instructor LIMIT 1').get()
   if (existing) return
 
-  const instructorAvailabilityRepository = createInstructorAvailabilityRepository(db)
+  const instructorAvailabilityModel = createInstructorAvailabilityModel(db)
 
   for (const instructor of DEMO_INSTRUCTORS) {
     const passwordHash = await hashPassword(DEMO_INSTRUCTOR_PASSWORD)
@@ -172,7 +172,7 @@ export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
     )
 
     for (const weekday of DEMO_AVAILABILITY_WEEKDAYS) {
-      instructorAvailabilityRepository.create({
+      instructorAvailabilityModel.create({
         id: randomUUID(),
         instructorId,
         weekday,
@@ -211,12 +211,12 @@ export function seedDemoAppointments(db: DatabaseSync): void {
   // algorithm actually works end to end.
   const appointmentService = createAppointmentService({
     db,
-    appointmentRepository: createAppointmentRepository(db),
-    studentRepository: createStudentRepository(db),
-    instructorRepository: createInstructorRepository(db),
-    instructorAvailabilityRepository: createInstructorAvailabilityRepository(db),
-    instructorBlockRepository: createInstructorBlockRepository(db),
-    vehicleRepository: createVehicleRepository(db),
+    appointmentModel: createAppointmentModel(db),
+    studentModel: createStudentModel(db),
+    instructorModel: createInstructorModel(db),
+    instructorAvailabilityModel: createInstructorAvailabilityModel(db),
+    instructorBlockModel: createInstructorBlockModel(db),
+    vehicleModel: createVehicleModel(db),
   })
 
   const startAt = new Date()

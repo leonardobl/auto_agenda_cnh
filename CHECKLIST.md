@@ -34,11 +34,18 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 - [x] Ver minha agenda / histórico — `student-self-service`. Mesma fonte (`GET /appointments`, escopada por aluno), dividida no cliente por data (futuro/passado), sem endpoint novo
 - [x] Editar o próprio perfil — `student-self-service`. Real: `GET/PATCH /students/me`, escopo mínimo (só telefone editável; nome/documento/categoria/status continuam só-Admin), mesmo padrão de `instructor-edit-profile`
 
+## Público
+
+- [x] Página institucional (`/`) — `institutional-landing-page`. Site público de divulgação (sobre, serviços, galeria, matrícula, contato), 100% front-end/simulado (sem endpoint novo); "Entrar" no cabeçalho leva ao login de cada perfil
+
 ## Transversais
 
 - [x] Testes de componente (Cypress) cobrindo tudo que foi implementado
 - [x] Changelog (`CHANGELOG.md`) atualizado a cada commit
 - [x] Migrations versionadas + seed de dados de demonstração
+- [x] Back-end em MVC (`routes/` `controllers/` `models/` `views/`) — `migrate-api-to-mvc`. Exigência do enunciado do PI II; mesmas rotas e respostas de antes, travadas por uma suíte de caracterização (`node:test` + snapshot)
+- [ ] Testes do back-end (regras de negócio, agendamento, permissões) — próxima change; a suíte de caracterização é só a rede de segurança da migração
+- [ ] Troca de SGBD (SQLite → banco mais convencional, previsto em `docs/`) — change separada, depois desta
 
 ## Como manter este checklist
 
