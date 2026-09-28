@@ -18,8 +18,8 @@ function requireIdParam(req: Request): string {
 
 export function createInstructorController({ instructorService }: InstructorControllerDeps) {
   return {
-    list(req: Request, res: Response) {
-      const result = instructorService.list(req.query)
+    async list(req: Request, res: Response) {
+      const result = await instructorService.list(req.query)
       res.status(200).json(presentPage(result, presentInstructor))
     },
 
@@ -28,23 +28,23 @@ export function createInstructorController({ instructorService }: InstructorCont
       res.status(201).json(presentInstructor(instructor))
     },
 
-    getById(req: Request, res: Response) {
-      const instructor = instructorService.getById(requireIdParam(req))
+    async getById(req: Request, res: Response) {
+      const instructor = await instructorService.getById(requireIdParam(req))
       res.status(200).json(presentInstructor(instructor))
     },
 
-    update(req: Request, res: Response) {
-      const instructor = instructorService.update(requireIdParam(req), req.body ?? {})
+    async update(req: Request, res: Response) {
+      const instructor = await instructorService.update(requireIdParam(req), req.body ?? {})
       res.status(200).json(presentInstructor(instructor))
     },
 
-    getMe(req: Request, res: Response) {
-      const instructor = instructorService.getOwnProfile(req.user!.id)
+    async getMe(req: Request, res: Response) {
+      const instructor = await instructorService.getOwnProfile(req.user!.id)
       res.status(200).json(presentInstructor(instructor))
     },
 
-    updateMe(req: Request, res: Response) {
-      const instructor = instructorService.updateOwnProfile(req.user!.id, req.body ?? {})
+    async updateMe(req: Request, res: Response) {
+      const instructor = await instructorService.updateOwnProfile(req.user!.id, req.body ?? {})
       res.status(200).json(presentInstructor(instructor))
     },
   }

@@ -17,7 +17,7 @@ export interface AuthenticatedUser {
 
 export interface AuthService {
   login(email: unknown, password: unknown): Promise<{ token: string; user: AuthenticatedUser }>
-  logout(sessionId: string): void
+  logout(sessionId: string): Promise<void>
   requestPasswordReset(email: unknown): Promise<void>
   resetPassword(token: unknown, newPassword: unknown): Promise<void>
 }
@@ -50,7 +50,7 @@ export function createAuthService({
         throw new ApiError(401, 'AUTHENTICATION_REQUIRED', 'E-mail ou senha inválidos.')
       }
 
-      const user = userModel.findByEmail(email)
+      const user = await userModel.findByEmail(email)
       const passwordMatches = user ? await verifyPassword(password, user.password_hash) : false
 
       if (!user || !passwordMatches || user.status !== 'ACTIVE') {
@@ -58,13 +58,13 @@ export function createAuthService({
       }
 
       const sessionId = randomUUID()
-      sessionModel.create({ id: sessionId, userId: user.id, ttlSeconds: SESSION_TTL_SECONDS })
+      await sessionModel.create({ id: sessionId, userId: user.id, ttlSeconds: SESSION_TTL_SECONDS })
 
       return { token: sessionId, user: toAuthenticatedUser(user) }
     },
 
-    logout(sessionId) {
-      sessionModel.delete(sessionId)
+    async logout(sessionId) {
+      await sessionModel.delete(sessionId)
     },
 
     async requestPasswordReset(email) {
@@ -72,13 +72,13 @@ export function createAuthService({
         return
       }
 
-      const user = userModel.findByEmail(email)
+      const user = await userModel.findByEmail(email)
       if (!user || user.status !== 'ACTIVE') {
         return
       }
 
       const tokenId = randomUUID()
-      passwordResetTokenModel.create({
+      await passwordResetTokenModel.create({
         id: tokenId,
         userId: user.id,
         ttlSeconds: RESET_TOKEN_TTL_SECONDS,
@@ -94,15 +94,15 @@ export function createAuthService({
         throw new ApiError(400, 'VALIDATION_ERROR', 'Link inválido ou expirado.')
       }
 
-      const resetToken = passwordResetTokenModel.findValidById(token)
+      const resetToken = await passwordResetTokenModel.findValidById(token)
       if (!resetToken) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Link inválido ou expirado.')
       }
 
       const passwordHash = await hashPassword(newPassword)
-      userModel.updatePasswordHash(resetToken.user_id, passwordHash)
-      passwordResetTokenModel.markUsed(resetToken.id)
-      sessionModel.deleteAllForUser(resetToken.user_id)
+      await userModel.updatePasswordHash(resetToken.user_id, passwordHash)
+      await passwordResetTokenModel.markUsed(resetToken.id)
+      await sessionModel.deleteAllForUser(resetToken.user_id)
     },
   }
 }

@@ -28,14 +28,14 @@ export interface AddBlockParams {
 }
 
 export interface InstructorAvailabilityService {
-  listAvailability(instructorId: string, requester: Requester): InstructorAvailabilityRecord[]
+  listAvailability(instructorId: string, requester: Requester): Promise<InstructorAvailabilityRecord[]>
   addAvailability(
     instructorId: string,
     requester: Requester,
     params: AddAvailabilityParams,
-  ): InstructorAvailabilityRecord
-  listBlocks(instructorId: string, requester: Requester): InstructorBlockRecord[]
-  addBlock(instructorId: string, requester: Requester, params: AddBlockParams): InstructorBlockRecord
+  ): Promise<InstructorAvailabilityRecord>
+  listBlocks(instructorId: string, requester: Requester): Promise<InstructorBlockRecord[]>
+  addBlock(instructorId: string, requester: Requester, params: AddBlockParams): Promise<InstructorBlockRecord>
 }
 
 interface InstructorAvailabilityServiceDeps {
@@ -49,8 +49,8 @@ export function createInstructorAvailabilityService({
   instructorAvailabilityModel,
   instructorBlockModel,
 }: InstructorAvailabilityServiceDeps): InstructorAvailabilityService {
-  function assertCanManage(instructorId: string, requester: Requester) {
-    const instructor = instructorModel.findById(instructorId)
+  async function assertCanManage(instructorId: string, requester: Requester): Promise<void> {
+    const instructor = await instructorModel.findById(instructorId)
     if (!instructor) {
       throw new ApiError(404, 'INSTRUCTOR_NOT_FOUND', 'Instrutor não encontrado.')
     }
@@ -60,13 +60,13 @@ export function createInstructorAvailabilityService({
   }
 
   return {
-    listAvailability(instructorId, requester) {
-      assertCanManage(instructorId, requester)
+    async listAvailability(instructorId, requester) {
+      await assertCanManage(instructorId, requester)
       return instructorAvailabilityModel.findByInstructorId(instructorId)
     },
 
-    addAvailability(instructorId, requester, { weekday, startTime, endTime }) {
-      assertCanManage(instructorId, requester)
+    async addAvailability(instructorId, requester, { weekday, startTime, endTime }) {
+      await assertCanManage(instructorId, requester)
 
       const parsedWeekday = Number(weekday)
       if (
@@ -95,13 +95,13 @@ export function createInstructorAvailabilityService({
       })
     },
 
-    listBlocks(instructorId, requester) {
-      assertCanManage(instructorId, requester)
+    async listBlocks(instructorId, requester) {
+      await assertCanManage(instructorId, requester)
       return instructorBlockModel.findByInstructorId(instructorId)
     },
 
-    addBlock(instructorId, requester, { startAt, endAt, reason }) {
-      assertCanManage(instructorId, requester)
+    async addBlock(instructorId, requester, { startAt, endAt, reason }) {
+      await assertCanManage(instructorId, requester)
 
       if (
         typeof startAt !== 'string' ||

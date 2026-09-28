@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS instructor_availability (
   start_time TEXT NOT NULL,
   end_time TEXT NOT NULL,
   active INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

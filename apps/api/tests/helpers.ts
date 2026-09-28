@@ -1,10 +1,10 @@
 import type { AddressInfo } from 'node:net'
 import type { Server } from 'node:http'
-import type { DatabaseSync } from 'node:sqlite'
+import { randomBytes } from 'node:crypto'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createApp } from '../src/app.ts'
-import { createConnection } from '../src/database/connection.ts'
+import { createDatabase, type Database } from '../src/database/connection.ts'
 import { runMigrations } from '../scripts/migrate.ts'
 import {
   seedDemoUser,
@@ -17,7 +17,7 @@ import {
 const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '../src/database/migrations')
 
 export interface TestServer {
-  db: DatabaseSync
+  db: Database
   baseUrl: string
   close(): Promise<void>
 }
@@ -32,20 +32,38 @@ export interface CallResult {
   body: unknown
 }
 
-// Boots the real Express app on an ephemeral port over an in-memory SQLite database
+// Boots the real Express app on an ephemeral port over a throwaway PostgreSQL schema
 // (real migrations + the same demo seed `yarn db:setup` runs) — no mocks, so a test
 // exercises the same route → controller → model path production does.
+//
+// Isolation: the schema (`t_<random>`) is created in the database DATABASE_URL points to
+// and dropped at the end; every test connection has `search_path = <schema>, public`, so
+// unqualified table names resolve to the test schema's own tables and the development
+// schema is never touched. `public` stays in the path only so the btree_gist extension
+// (created there by migration 0007) is found.
 export async function startTestServer(): Promise<TestServer> {
+  const databaseUrl = process.env.DATABASE_URL
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is required to run the tests (see apps/api/.env.example).')
+  }
+
+  const schema = `t_${randomBytes(6).toString('hex')}`
+  const admin = createDatabase(databaseUrl)
+  await admin.query(`CREATE SCHEMA ${schema}`)
+  const db = createDatabase(databaseUrl, { searchPath: `${schema},public` })
+
   const log = console.log
   console.log = () => {}
-  const db = createConnection(':memory:')
-  runMigrations(db, MIGRATIONS_DIR)
-  await seedDemoUser(db)
-  await seedDemoStudents(db)
-  seedDemoVehicles(db)
-  await seedDemoInstructors(db)
-  seedDemoAppointments(db)
-  console.log = log
+  try {
+    await runMigrations(db, MIGRATIONS_DIR)
+    await seedDemoUser(db)
+    await seedDemoStudents(db)
+    await seedDemoVehicles(db)
+    await seedDemoInstructors(db)
+    await seedDemoAppointments(db)
+  } finally {
+    console.log = log
+  }
 
   const app = createApp({ appOrigin: 'http://localhost:5173', db })
   const server: Server = await new Promise((resolve) => {
@@ -56,14 +74,14 @@ export async function startTestServer(): Promise<TestServer> {
   return {
     db,
     baseUrl: `http://127.0.0.1:${port}`,
-    close: () =>
-      new Promise((resolve, reject) => {
-        server.close((error) => {
-          db.close()
-          if (error) reject(error)
-          else resolve()
-        })
-      }),
+    async close() {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()))
+      })
+      await db.close()
+      await admin.query(`DROP SCHEMA ${schema} CASCADE`)
+      await admin.close()
+    },
   }
 }
 

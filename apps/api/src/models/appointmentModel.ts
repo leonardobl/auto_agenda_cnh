@@ -1,4 +1,5 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
+import { bind } from '../database/params.ts'
 
 export interface AppointmentRecord {
   id: string
@@ -43,12 +44,12 @@ export interface CountParams {
 }
 
 export interface AppointmentModel {
-  isStudentFree(studentId: string, startAt: string, endAt: string): boolean
-  isInstructorFree(instructorId: string, startAt: string, endAt: string): boolean
-  isVehicleFree(vehicleId: string, startAt: string, endAt: string): boolean
-  create(input: CreateAppointmentInput): AppointmentRecord
-  findMany(params: FindManyParams): AppointmentRecord[]
-  count(params: CountParams): number
+  isStudentFree(studentId: string, startAt: string, endAt: string): Promise<boolean>
+  isInstructorFree(instructorId: string, startAt: string, endAt: string): Promise<boolean>
+  isVehicleFree(vehicleId: string, startAt: string, endAt: string): Promise<boolean>
+  create(input: CreateAppointmentInput): Promise<AppointmentRecord>
+  findMany(params: FindManyParams): Promise<AppointmentRecord[]>
+  count(params: CountParams): Promise<number>
 }
 
 // Resolves the student/instructor/vehicle names an Instructor caller needs to make
@@ -66,31 +67,34 @@ const SELECT_WITH_NAMES = `
   JOIN vehicle ON vehicle.id = appointment.vehicle_id
 `
 
-// Every appointment created in this change stays in AGENDADA (no cancel/complete
-// actions exist yet), so every row is a "live" booking — this overlap check doesn't
-// need a status filter today. Add one (excluding cancelled/final states) once a
-// lifecycle-transition change lands.
-function isFree(
-  db: DatabaseSync,
+// Every appointment created so far stays in AGENDADA (no cancel/complete actions
+// exist yet), so every row is a "live" booking — this overlap check doesn't need a
+// status filter today. Add one (excluding cancelled/final states) once a
+// lifecycle-transition change lands, and add the same predicate to the exclusion
+// constraints in migration 0007.
+async function isFree(
+  db: Queryable,
   column: 'student_id' | 'instructor_id' | 'vehicle_id',
   resourceId: string,
   startAt: string,
   endAt: string,
-): boolean {
+): Promise<boolean> {
   // Overlap iff NOT(existing.end_at <= new.startAt OR new.endAt <= existing.start_at),
-  // i.e. NOT(end_at <= newStartAt OR start_at >= newEndAt) — bind newStartAt first,
-  // newEndAt second (params must not be swapped, or every check silently inverts).
-  const row = db
-    .prepare(`SELECT 1 FROM appointment WHERE ${column} = ? AND NOT (end_at <= ? OR start_at >= ?) LIMIT 1`)
-    .get(resourceId, startAt, endAt)
-  return !row
+  // i.e. NOT(end_at <= newStartAt OR start_at >= newEndAt) — bind newStartAt ($2) first,
+  // newEndAt ($3) second (params must not be swapped, or every check silently inverts).
+  // This check gives the friendly per-resource 409; the exclusion constraints in
+  // migration 0007 are the concurrency-proof backstop behind it.
+  const { rows } = await db.query(
+    `SELECT 1 FROM appointment WHERE ${column} = $1 AND NOT (end_at <= $2 OR start_at >= $3) LIMIT 1`,
+    [resourceId, startAt, endAt],
+  )
+  return rows.length === 0
 }
 
-export function createAppointmentModel(db: DatabaseSync): AppointmentModel {
-  function findById(id: string): AppointmentRecord | undefined {
-    return db
-      .prepare(`${SELECT_WITH_NAMES} WHERE appointment.id = ?`)
-      .get(id) as AppointmentRecord | undefined
+export function createAppointmentModel(db: Queryable): AppointmentModel {
+  async function findById(id: string): Promise<AppointmentRecord | undefined> {
+    const { rows } = await db.query<AppointmentRecord>(`${SELECT_WITH_NAMES} WHERE appointment.id = $1`, [id])
+    return rows[0]
   }
 
   return {
@@ -106,40 +110,47 @@ export function createAppointmentModel(db: DatabaseSync): AppointmentModel {
       return isFree(db, 'vehicle_id', vehicleId, startAt, endAt)
     },
 
-    create({ id, studentId, instructorId, vehicleId, categoryId, startAt, endAt, createdBy }) {
-      db.prepare(
+    async create({ id, studentId, instructorId, vehicleId, categoryId, startAt, endAt, createdBy }) {
+      // May reject with a 23P01 (exclusion_violation) if a concurrent booking won the
+      // race — appointmentService.book translates it to the matching 409.
+      await db.query(
         `INSERT INTO appointment (id, student_id, instructor_id, vehicle_id, category_id, start_at, end_at, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(id, studentId, instructorId, vehicleId, categoryId, startAt, endAt, createdBy)
-      return findById(id)!
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [id, studentId, instructorId, vehicleId, categoryId, startAt, endAt, createdBy],
+      )
+      return (await findById(id))!
     },
 
-    findMany({ page, pageSize, instructorId, studentId }) {
-      const offset = (page - 1) * pageSize
+    async findMany({ page, pageSize, instructorId, studentId }) {
+      const params: unknown[] = []
       // A single requester has exactly one role, so instructorId/studentId are never
       // both set at once — this is a parallel scoping branch, not a combined filter.
       const where = instructorId
-        ? 'WHERE appointment.instructor_id = ?'
+        ? `WHERE appointment.instructor_id = ${bind(params, instructorId)}`
         : studentId
-          ? 'WHERE appointment.student_id = ?'
+          ? `WHERE appointment.student_id = ${bind(params, studentId)}`
           : ''
-      const params = instructorId ? [instructorId] : studentId ? [studentId] : []
-      return db
-        .prepare(`${SELECT_WITH_NAMES} ${where} ORDER BY appointment.start_at LIMIT ? OFFSET ?`)
-        .all(...params, pageSize, offset) as unknown as AppointmentRecord[]
+      const limit = bind(params, pageSize)
+      const offset = bind(params, (page - 1) * pageSize)
+      const { rows } = await db.query<AppointmentRecord>(
+        `${SELECT_WITH_NAMES} ${where} ORDER BY appointment.start_at LIMIT ${limit} OFFSET ${offset}`,
+        params,
+      )
+      return rows
     },
 
-    count({ instructorId, studentId }) {
+    async count({ instructorId, studentId }) {
+      const params: unknown[] = []
       const where = instructorId
-        ? 'WHERE instructor_id = ?'
+        ? `WHERE instructor_id = ${bind(params, instructorId)}`
         : studentId
-          ? 'WHERE student_id = ?'
+          ? `WHERE student_id = ${bind(params, studentId)}`
           : ''
-      const params = instructorId ? [instructorId] : studentId ? [studentId] : []
-      const row = db
-        .prepare(`SELECT COUNT(*) as total FROM appointment ${where}`)
-        .get(...params) as { total: number }
-      return row.total
+      const { rows } = await db.query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total FROM appointment ${where}`,
+        params,
+      )
+      return rows[0]!.total
     },
   }
 }

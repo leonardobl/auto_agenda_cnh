@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../database/connection.ts'
 import { createUserModel } from '../models/userModel.ts'
 import { createSessionModel } from '../models/sessionModel.ts'
 import { createStudentModel } from '../models/studentModel.ts'
@@ -14,7 +14,7 @@ import { requireAuth } from '../middlewares/requireAuth.ts'
 import { requireRole } from '../middlewares/requireRole.ts'
 
 interface AppointmentRoutesDeps {
-  db: DatabaseSync
+  db: Database
 }
 
 export function appointmentRoutes({ db }: AppointmentRoutesDeps): Router {
@@ -29,7 +29,7 @@ export function appointmentRoutes({ db }: AppointmentRoutesDeps): Router {
   const vehicleModel = createVehicleModel(db)
   const appointmentModel = createAppointmentModel(db)
   const appointmentService = createAppointmentService({
-    db,
+    database: db,
     appointmentModel,
     studentModel,
     instructorModel,

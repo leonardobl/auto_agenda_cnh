@@ -1,4 +1,4 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
 
 export interface PasswordResetTokenRecord {
   id: string
@@ -15,29 +15,30 @@ export interface CreatePasswordResetTokenInput {
 }
 
 export interface PasswordResetTokenModel {
-  create(input: CreatePasswordResetTokenInput): void
-  findValidById(id: string): PasswordResetTokenRecord | undefined
-  markUsed(id: string): void
+  create(input: CreatePasswordResetTokenInput): Promise<void>
+  findValidById(id: string): Promise<PasswordResetTokenRecord | undefined>
+  markUsed(id: string): Promise<void>
 }
 
-export function createPasswordResetTokenModel(db: DatabaseSync): PasswordResetTokenModel {
+export function createPasswordResetTokenModel(db: Queryable): PasswordResetTokenModel {
   return {
-    create({ id, userId, ttlSeconds }) {
-      // expires_at is computed via SQLite's own datetime(), same reasoning as sessionModel.create.
-      db.prepare(
+    async create({ id, userId, ttlSeconds }) {
+      // Expiry uses the database clock, same reasoning as sessionModel.create.
+      await db.query(
         `INSERT INTO password_reset_token (id, user_id, expires_at)
-         VALUES (?, ?, datetime('now', '+' || ? || ' seconds'))`,
-      ).run(id, userId, ttlSeconds)
+         VALUES ($1, $2, now() + make_interval(secs => $3))`,
+        [id, userId, ttlSeconds],
+      )
     },
-    findValidById(id) {
-      return db
-        .prepare(
-          "SELECT * FROM password_reset_token WHERE id = ? AND used_at IS NULL AND expires_at > datetime('now')",
-        )
-        .get(id) as PasswordResetTokenRecord | undefined
+    async findValidById(id) {
+      const { rows } = await db.query<PasswordResetTokenRecord>(
+        'SELECT * FROM password_reset_token WHERE id = $1 AND used_at IS NULL AND expires_at > now()',
+        [id],
+      )
+      return rows[0]
     },
-    markUsed(id) {
-      db.prepare("UPDATE password_reset_token SET used_at = datetime('now') WHERE id = ?").run(id)
+    async markUsed(id) {
+      await db.query('UPDATE password_reset_token SET used_at = now() WHERE id = $1', [id])
     },
   }
 }

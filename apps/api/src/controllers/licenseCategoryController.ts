@@ -8,8 +8,8 @@ interface LicenseCategoryControllerDeps {
 
 export function createLicenseCategoryController({ licenseCategoryService }: LicenseCategoryControllerDeps) {
   return {
-    list(_req: Request, res: Response) {
-      const categories = licenseCategoryService.list()
+    async list(_req: Request, res: Response) {
+      const categories = await licenseCategoryService.list()
       res.status(200).json(categories.map(presentLicenseCategory))
     },
   }

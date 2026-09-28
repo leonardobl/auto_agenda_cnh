@@ -20,12 +20,12 @@ interface RequireAuthDeps {
 }
 
 export function requireAuth({ sessionModel, userModel }: RequireAuthDeps) {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : undefined
 
-    const session = token ? sessionModel.findValidById(token) : undefined
-    const user = session ? userModel.findById(session.user_id) : undefined
+    const session = token ? await sessionModel.findValidById(token) : undefined
+    const user = session ? await userModel.findById(session.user_id) : undefined
 
     if (!session || !user) {
       throw new ApiError(401, 'AUTHENTICATION_REQUIRED', 'Autenticação necessária.')

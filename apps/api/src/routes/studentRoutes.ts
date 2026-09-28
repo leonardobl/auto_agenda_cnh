@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../database/connection.ts'
 import { createUserModel } from '../models/userModel.ts'
 import { createSessionModel } from '../models/sessionModel.ts'
 import { createStudentModel } from '../models/studentModel.ts'
@@ -12,7 +12,7 @@ import { requireAuth } from '../middlewares/requireAuth.ts'
 import { requireRole } from '../middlewares/requireRole.ts'
 
 interface StudentRoutesDeps {
-  db: DatabaseSync
+  db: Database
 }
 
 export function studentRoutes({ db }: StudentRoutesDeps): Router {
@@ -22,7 +22,7 @@ export function studentRoutes({ db }: StudentRoutesDeps): Router {
   const sessionModel = createSessionModel(db)
   const studentModel = createStudentModel(db)
   const licenseCategoryModel = createLicenseCategoryModel(db)
-  const studentService = createStudentService({ db, studentModel, licenseCategoryModel, userModel })
+  const studentService = createStudentService({ database: db, studentModel, licenseCategoryModel })
   const studentController = createStudentController({ studentService })
   const licenseCategoryService = createLicenseCategoryService({ licenseCategoryModel })
   const licenseCategoryController = createLicenseCategoryController({ licenseCategoryService })

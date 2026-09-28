@@ -14,8 +14,8 @@ export function createAuthController({ authService }: AuthControllerDeps) {
       res.status(200).json(presentLogin({ token, user }))
     },
 
-    logout(req: Request, res: Response) {
-      authService.logout(req.sessionId!)
+    async logout(req: Request, res: Response) {
+      await authService.logout(req.sessionId!)
       res.status(204).send()
     },
 
@@ -33,7 +33,7 @@ export function createAuthController({ authService }: AuthControllerDeps) {
       res.status(200).json(presentMessage('Senha redefinida com sucesso.'))
     },
 
-    me(req: Request, res: Response) {
+    async me(req: Request, res: Response) {
       res.status(200).json(presentAuthenticatedUser(req.user!))
     },
   }

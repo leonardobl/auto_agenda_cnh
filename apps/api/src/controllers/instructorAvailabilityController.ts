@@ -24,13 +24,13 @@ export function createInstructorAvailabilityController({
   instructorAvailabilityService,
 }: InstructorAvailabilityControllerDeps) {
   return {
-    listAvailability(req: Request, res: Response) {
-      const items = instructorAvailabilityService.listAvailability(requireIdParam(req), requesterFrom(req))
+    async listAvailability(req: Request, res: Response) {
+      const items = await instructorAvailabilityService.listAvailability(requireIdParam(req), requesterFrom(req))
       res.status(200).json(presentItems(items, presentInstructorAvailability))
     },
 
-    addAvailability(req: Request, res: Response) {
-      const availability = instructorAvailabilityService.addAvailability(
+    async addAvailability(req: Request, res: Response) {
+      const availability = await instructorAvailabilityService.addAvailability(
         requireIdParam(req),
         requesterFrom(req),
         req.body ?? {},
@@ -38,13 +38,13 @@ export function createInstructorAvailabilityController({
       res.status(201).json(presentInstructorAvailability(availability))
     },
 
-    listBlocks(req: Request, res: Response) {
-      const items = instructorAvailabilityService.listBlocks(requireIdParam(req), requesterFrom(req))
+    async listBlocks(req: Request, res: Response) {
+      const items = await instructorAvailabilityService.listBlocks(requireIdParam(req), requesterFrom(req))
       res.status(200).json(presentItems(items, presentInstructorBlock))
     },
 
-    addBlock(req: Request, res: Response) {
-      const block = instructorAvailabilityService.addBlock(
+    async addBlock(req: Request, res: Response) {
+      const block = await instructorAvailabilityService.addBlock(
         requireIdParam(req),
         requesterFrom(req),
         req.body ?? {},

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { isUniqueViolation } from '../database/errors.ts'
 import { ApiError } from '../shared/ApiError.ts'
 import type { VehicleModel, VehicleRecord } from './vehicleModel.ts'
 import type { LicenseCategoryModel } from './licenseCategoryModel.ts'
@@ -41,10 +42,10 @@ export interface UpdateVehicleParams {
 }
 
 export interface VehicleService {
-  list(params: ListVehiclesParams): VehicleListResult
-  register(params: CreateVehicleParams): VehicleRecord
-  getById(id: string): VehicleRecord
-  update(id: string, params: UpdateVehicleParams): VehicleRecord
+  list(params: ListVehiclesParams): Promise<VehicleListResult>
+  register(params: CreateVehicleParams): Promise<VehicleRecord>
+  getById(id: string): Promise<VehicleRecord>
+  update(id: string, params: UpdateVehicleParams): Promise<VehicleRecord>
 }
 
 interface VehicleServiceDeps {
@@ -75,39 +76,30 @@ function isPlausibleYear(value: number): boolean {
   return Number.isInteger(value) && value >= MIN_YEAR && value <= MAX_YEAR
 }
 
-function isUniqueConstraintError(error: unknown, column: string): boolean {
-  return (
-    error instanceof Error &&
-    'code' in error &&
-    (error as { code?: string }).code === 'ERR_SQLITE_ERROR' &&
-    error.message.includes(`UNIQUE constraint failed: vehicle.${column}`)
-  )
-}
-
 export function createVehicleService({
   vehicleModel,
   licenseCategoryModel,
 }: VehicleServiceDeps): VehicleService {
-  function assertCategoryExists(categoryId: string): void {
-    const categories = licenseCategoryModel.findAll()
+  async function assertCategoryExists(categoryId: string): Promise<void> {
+    const categories = await licenseCategoryModel.findAll()
     if (!categories.some((category) => category.id === categoryId)) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'Categoria de CNH inválida.')
     }
   }
 
   return {
-    list({ page, pageSize, search, status }) {
+    async list({ page, pageSize, search, status }) {
       const parsedPage = parsePage(page)
       const parsedPageSize = parsePageSize(pageSize)
       const filters = { search: parseOptionalString(search), status: parseOptionalString(status) }
 
-      const items = vehicleModel.findMany({ page: parsedPage, pageSize: parsedPageSize, ...filters })
-      const total = vehicleModel.count(filters)
+      const items = await vehicleModel.findMany({ page: parsedPage, pageSize: parsedPageSize, ...filters })
+      const total = await vehicleModel.count(filters)
 
       return { items, page: parsedPage, pageSize: parsedPageSize, total }
     },
 
-    register({ plate, brand, model, year, categoryId }) {
+    async register({ plate, brand, model, year, categoryId }) {
       if (
         typeof plate !== 'string' ||
         !plate.trim() ||
@@ -126,10 +118,10 @@ export function createVehicleService({
         throw new ApiError(400, 'VALIDATION_ERROR', 'Ano do veículo inválido.')
       }
 
-      assertCategoryExists(categoryId)
+      await assertCategoryExists(categoryId)
 
       try {
-        return vehicleModel.create({
+        return await vehicleModel.create({
           id: randomUUID(),
           plate: normalizePlate(plate),
           brand: brand.trim(),
@@ -138,24 +130,24 @@ export function createVehicleService({
           categoryId,
         })
       } catch (error) {
-        if (isUniqueConstraintError(error, 'plate')) {
+        if (isUniqueViolation(error, 'vehicle_plate_key')) {
           throw new ApiError(409, 'VEHICLE_PLATE_CONFLICT', 'Já existe um veículo com esta placa.')
         }
         throw error
       }
     },
 
-    getById(id) {
-      const vehicle = vehicleModel.findById(id)
+    async getById(id) {
+      const vehicle = await vehicleModel.findById(id)
       if (!vehicle) {
         throw new ApiError(404, 'VEHICLE_NOT_FOUND', 'Veículo não encontrado.')
       }
       return vehicle
     },
 
-    update(id, { plate, brand, model, year, categoryId, status }) {
+    async update(id, { plate, brand, model, year, categoryId, status }) {
       if (typeof categoryId === 'string' && categoryId) {
-        assertCategoryExists(categoryId)
+        await assertCategoryExists(categoryId)
       }
 
       if (status !== undefined && (typeof status !== 'string' || !VALID_STATUSES.includes(status))) {
@@ -171,7 +163,7 @@ export function createVehicleService({
       }
 
       try {
-        const updated = vehicleModel.update(id, {
+        const updated = await vehicleModel.update(id, {
           plate: typeof plate === 'string' && plate.trim() ? normalizePlate(plate) : undefined,
           brand: typeof brand === 'string' ? brand.trim() : undefined,
           model: typeof model === 'string' ? model.trim() : undefined,
@@ -186,7 +178,7 @@ export function createVehicleService({
 
         return updated
       } catch (error) {
-        if (isUniqueConstraintError(error, 'plate')) {
+        if (isUniqueViolation(error, 'vehicle_plate_key')) {
           throw new ApiError(409, 'VEHICLE_PLATE_CONFLICT', 'Já existe um veículo com esta placa.')
         }
         throw error

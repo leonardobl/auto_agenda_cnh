@@ -1,4 +1,4 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
 
 export interface UserRecord {
   id: string
@@ -20,33 +20,37 @@ export interface CreateUserInput {
 }
 
 export interface UserModel {
-  findByEmail(email: string): UserRecord | undefined
-  findById(id: string): UserRecord | undefined
-  create(input: CreateUserInput): UserRecord
-  updatePasswordHash(id: string, passwordHash: string): void
+  findByEmail(email: string): Promise<UserRecord | undefined>
+  findById(id: string): Promise<UserRecord | undefined>
+  create(input: CreateUserInput): Promise<UserRecord>
+  updatePasswordHash(id: string, passwordHash: string): Promise<void>
 }
 
-export function createUserModel(db: DatabaseSync): UserModel {
-  function findById(id: string): UserRecord | undefined {
-    return db.prepare('SELECT * FROM user WHERE id = ?').get(id) as UserRecord | undefined
-  }
-
+// "user" is a reserved word in PostgreSQL — always quoted.
+export function createUserModel(db: Queryable): UserModel {
   return {
-    findByEmail(email) {
-      return db.prepare('SELECT * FROM user WHERE email = ?').get(email) as UserRecord | undefined
+    async findByEmail(email) {
+      const { rows } = await db.query<UserRecord>('SELECT * FROM "user" WHERE email = $1', [email])
+      return rows[0]
     },
-    findById,
-    create({ id, email, passwordHash, role, status }) {
-      db.prepare(
-        `INSERT INTO user (id, email, password_hash, role, status)
-         VALUES (?, ?, ?, ?, ?)`,
-      ).run(id, email, passwordHash, role, status)
-      return findById(id)!
+    async findById(id) {
+      const { rows } = await db.query<UserRecord>('SELECT * FROM "user" WHERE id = $1', [id])
+      return rows[0]
     },
-    updatePasswordHash(id, passwordHash) {
-      db.prepare(
-        `UPDATE user SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`,
-      ).run(passwordHash, id)
+    async create({ id, email, passwordHash, role, status }) {
+      const { rows } = await db.query<UserRecord>(
+        `INSERT INTO "user" (id, email, password_hash, role, status)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [id, email, passwordHash, role, status],
+      )
+      return rows[0]!
+    },
+    async updatePasswordHash(id, passwordHash) {
+      await db.query(`UPDATE "user" SET password_hash = $1, updated_at = now() WHERE id = $2`, [
+        passwordHash,
+        id,
+      ])
     },
   }
 }

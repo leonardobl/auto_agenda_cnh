@@ -36,7 +36,7 @@ apps/web/            # front-end (React/Vite) — implementado
 apps/api/             # back-end (Node.js/Express) — implementado (infraestrutura, autenticação, alunos, veículos, instrutores e agendamento)
 packages/contracts/   # schemas/tipos compartilhados entre web e api — ainda não implementado
 docs/                 # especificação acadêmica (DOC-00 a DOC-10)
-infra/                # configuração de deploy/Docker — ainda não implementado
+infra/                # Docker Compose do PostgreSQL local (deploy ainda não implementado)
 ```
 
 ## Arquitetura do back-end (MVC)
@@ -44,7 +44,7 @@ infra/                # configuração de deploy/Docker — ainda não implement
 `apps/api` segue o padrão **MVC** (Model – View – Controller, com um Router à frente do Controller). Como a API responde JSON e não HTML, a **View** é a camada que monta o corpo da resposta.
 
 ```
-Usuário ──requisição HTTP──▶ Router ──▶ Controller ◀──dados──▶ Model ──▶ SQLite
+Usuário ──requisição HTTP──▶ Router ──▶ Controller ◀──dados──▶ Model ──▶ PostgreSQL
    ▲                                        │
    └────────────── JSON ◀──── View ◀────────┘
 ```
@@ -58,7 +58,7 @@ Usuário ──requisição HTTP──▶ Router ──▶ Controller ◀──d
 
 Exemplo (`GET /students/:id`): `routes/studentRoutes.ts` → `controllers/studentController.ts` → `models/studentService.ts` (valida) → `models/studentModel.ts` (SQL) → `views/studentView.ts` (JSON).
 
-Os testes do back-end (`yarn workspace @auto-agenda-cnh/api test`) sobem a aplicação real sobre um SQLite em memória, chamam cada endpoint e comparam a resposta com um *snapshot* — qualquer mudança de comportamento HTTP faz o teste falhar.
+Os testes do back-end (`yarn workspace @auto-agenda-cnh/api test`) sobem a aplicação real sobre um schema temporário do mesmo PostgreSQL (criado e apagado a cada execução, sem tocar nos dados de desenvolvimento), chamam cada endpoint e comparam a resposta com um *snapshot* — qualquer mudança de comportamento HTTP faz o teste falhar.
 
 ## Stack
 
@@ -70,27 +70,29 @@ Os testes do back-end (`yarn workspace @auto-agenda-cnh/api test`) sobem a aplic
 - [Axios](https://axios-http.com/) para chamadas HTTP
 - [Cypress](https://www.cypress.io/) (component testing) para testes unitários/integração do front-end
 - [Express](https://expressjs.com/) + TypeScript (`apps/api`) — roda nativamente no Node (type-stripping), sem bundler
-- **Banco de dados**: SQLite local (arquivo em `apps/api/data/app.db`), via módulo nativo `node:sqlite` do Node.js — SQL puro, sem ORM/query builder, sem serviço externo/hospedado
+- **Banco de dados**: [PostgreSQL](https://www.postgresql.org/) (driver `pg`) — SQL puro, sem ORM/query builder; sobe localmente via Docker Compose (`infra/docker-compose.yml`)
 - **Backend**: Node.js/Express, no mesmo repositório do front-end (monorepo)
 
-> A especificação acadêmica (`docs/04`, `docs/05`, `docs/09`) previa PostgreSQL como banco oficial e JavaScript puro no back-end. O projeto optou por manter SQLite local e usar TypeScript no back-end (consistência com o front-end) — decisões pendentes de confirmação com o professor. Veja a seção "Reconciling with the academic spec" em [CLAUDE.md](CLAUDE.md) para detalhes.
+> O back-end usa TypeScript em vez do JavaScript puro que `docs/04` cita, por consistência com o front-end — decisão pendente de confirmação com o professor. Veja a seção "Reconciling with the academic spec" em [CLAUDE.md](CLAUDE.md) para detalhes.
 
 ## Pré-requisitos
 
-- Node.js >= 22.5 (necessário para o módulo nativo `node:sqlite` e para `--env-file-if-exists`)
+- Node.js >= 22.18 (execução nativa de TypeScript e `--env-file-if-exists`)
+- [Docker](https://docs.docker.com/get-docker/) com Docker Compose — para o PostgreSQL local. Se preferir, use um PostgreSQL já instalado (versão 14 ou superior, com a extensão `btree_gist`, que já vem nos pacotes contrib padrão) e ajuste `DATABASE_URL`
 - Yarn (o projeto usa `yarn.lock` na raiz, não misture com `npm`/`pnpm`)
 
 ## Configuração
 
-1. Instale as dependências a partir da raiz do repositório:
+1. Suba o PostgreSQL local (a partir da raiz do repositório):
+   ```bash
+   docker compose -f infra/docker-compose.yml up -d
+   ```
+   Isso cria um banco `auto_agenda` (usuário/senha `auto_agenda`) na porta 5432, com os dados guardados em um volume Docker. Para parar: `docker compose -f infra/docker-compose.yml down` (acrescente `-v` para apagar os dados).
+2. Instale as dependências:
    ```bash
    yarn install
    ```
-   Isso instala as dependências de todos os pacotes do monorepo e já cria/configura automaticamente o banco SQLite local em `apps/api/data/app.db` (script `postinstall` de `apps/api`, ver `apps/api/scripts/setup-db.ts`): aplica as migrations versionadas em `apps/api/src/database/migrations/` e semeia um usuário de demonstração (ver abaixo). Não é necessário nenhum serviço externo. Para recriar/verificar o banco manualmente (idempotente — seguro rodar de novo):
-   ```bash
-   yarn workspace @auto-agenda-cnh/api db:setup
-   ```
-2. Copie o arquivo de variáveis de ambiente de exemplo do back-end e ajuste se necessário:
+3. Copie o arquivo de variáveis de ambiente de exemplo do back-end e ajuste se necessário:
    ```bash
    cp apps/api/.env.example apps/api/.env
    ```
@@ -99,10 +101,14 @@ Os testes do back-end (`yarn workspace @auto-agenda-cnh/api test`) sobem a aplic
    | `NODE_ENV` | Sim | `development`, `test` ou `production`. |
    | `PORT` | Sim | Porta em que a API escuta. |
    | `APP_ORIGIN` | Sim | Origem do front-end permitida via CORS. |
-   | `DB_PATH` | Não | Sobrescreve o caminho do arquivo SQLite (padrão: `data/app.db`). |
+   | `DATABASE_URL` | Sim | String de conexão do PostgreSQL. O valor do `.env.example` já funciona com o Docker Compose acima. |
 
-   O servidor recusa iniciar (fail-fast) se `NODE_ENV`, `PORT` ou `APP_ORIGIN` estiverem ausentes ou inválidos.
-3. Copie o arquivo de variáveis de ambiente de exemplo do front-end e ajuste se necessário:
+   O servidor recusa iniciar (fail-fast) se alguma variável obrigatória estiver ausente ou inválida.
+4. Crie as tabelas e os dados de demonstração (aplica as migrations de `apps/api/src/database/migrations/` e semeia um usuário de demonstração, ver abaixo). É idempotente — seguro rodar de novo:
+   ```bash
+   yarn workspace @auto-agenda-cnh/api db:setup
+   ```
+5. Copie o arquivo de variáveis de ambiente de exemplo do front-end e ajuste se necessário:
    ```bash
    cp apps/web/.env.example apps/web/.env
    ```
@@ -158,7 +164,7 @@ Os dois instrutores de demonstração já vêm com disponibilidade semanal semea
 ## Comandos
 
 ```bash
-yarn install                                  # instala tudo + prepara o banco SQLite local (rodar a partir da raiz)
+yarn install                                  # instala as dependências de todos os pacotes (rodar a partir da raiz)
 
 # Front-end
 yarn workspace @auto-agenda-cnh/web dev       # inicia o servidor de desenvolvimento do front-end
@@ -173,8 +179,10 @@ yarn workspace @auto-agenda-cnh/api dev       # inicia a API em modo desenvolvim
 yarn workspace @auto-agenda-cnh/api start     # inicia a API em modo produção
 yarn workspace @auto-agenda-cnh/api build     # type-check (tsc --noEmit) — sem bundler, não gera nada
 yarn workspace @auto-agenda-cnh/api lint      # roda o ESLint no back-end
-yarn workspace @auto-agenda-cnh/api test      # roda os testes do back-end (node:test, SQLite em memória)
-yarn workspace @auto-agenda-cnh/api db:setup  # cria/verifica o banco SQLite local (roda automaticamente após yarn install)
+yarn workspace @auto-agenda-cnh/api test      # roda os testes do back-end (node:test, schema temporário no PostgreSQL de DATABASE_URL)
+yarn workspace @auto-agenda-cnh/api db:setup  # aplica as migrations e o seed no PostgreSQL de DATABASE_URL (idempotente)
+yarn workspace @auto-agenda-cnh/api db:up     # sobe o PostgreSQL do Docker Compose
+yarn workspace @auto-agenda-cnh/api db:down   # para o PostgreSQL do Docker Compose
 ```
 
 Equivalente mais curto: `yarn --cwd apps/web <comando>` ou `yarn --cwd apps/api <comando>`.

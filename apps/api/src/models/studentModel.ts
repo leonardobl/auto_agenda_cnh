@@ -1,4 +1,5 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
+import { bind } from '../database/params.ts'
 
 export interface StudentRecord {
   id: string
@@ -41,74 +42,79 @@ export interface UpdateStudentInput {
 }
 
 export interface StudentModel {
-  findMany(params: FindManyParams): StudentRecord[]
-  count(filters: StudentFilters): number
-  findById(id: string): StudentRecord | undefined
-  findByUserId(userId: string): StudentRecord | undefined
-  create(input: CreateStudentInput): StudentRecord
-  update(id: string, input: UpdateStudentInput): StudentRecord | undefined
-  updateStatus(id: string, status: string): StudentRecord | undefined
-  linkUserId(id: string, userId: string): StudentRecord | undefined
+  findMany(params: FindManyParams): Promise<StudentRecord[]>
+  count(filters: StudentFilters): Promise<number>
+  findById(id: string): Promise<StudentRecord | undefined>
+  findByUserId(userId: string): Promise<StudentRecord | undefined>
+  create(input: CreateStudentInput): Promise<StudentRecord>
+  update(id: string, input: UpdateStudentInput): Promise<StudentRecord | undefined>
+  updateStatus(id: string, status: string): Promise<StudentRecord | undefined>
+  linkUserId(id: string, userId: string): Promise<StudentRecord | undefined>
 }
 
-function buildFilters({ search, status }: StudentFilters): { where: string; params: string[] } {
+function buildFilters({ search, status }: StudentFilters): { where: string; params: unknown[] } {
   const clauses: string[] = []
-  const params: string[] = []
+  const params: unknown[] = []
 
   if (search) {
-    clauses.push('(full_name LIKE ? OR document LIKE ?)')
-    const like = `%${search}%`
-    params.push(like, like)
+    // ILIKE: SQLite's LIKE ignored case for ASCII; keep the search case-insensitive.
+    const like = bind(params, `%${search}%`)
+    clauses.push(`(full_name ILIKE ${like} OR document ILIKE ${like})`)
   }
 
   if (status) {
-    clauses.push('status = ?')
-    params.push(status)
+    clauses.push(`status = ${bind(params, status)}`)
   }
 
   return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params }
 }
 
-export function createStudentModel(db: DatabaseSync): StudentModel {
-  function findById(id: string): StudentRecord | undefined {
-    return db.prepare('SELECT * FROM student WHERE id = ?').get(id) as StudentRecord | undefined
+export function createStudentModel(db: Queryable): StudentModel {
+  async function findById(id: string): Promise<StudentRecord | undefined> {
+    const { rows } = await db.query<StudentRecord>('SELECT * FROM student WHERE id = $1', [id])
+    return rows[0]
   }
 
   return {
-    findMany({ page, pageSize, search, status }) {
+    async findMany({ page, pageSize, search, status }) {
       const { where, params } = buildFilters({ search, status })
-      const offset = (page - 1) * pageSize
-      return db
-        .prepare(`SELECT * FROM student ${where} ORDER BY full_name LIMIT ? OFFSET ?`)
-        .all(...params, pageSize, offset) as unknown as StudentRecord[]
+      const limit = bind(params, pageSize)
+      const offset = bind(params, (page - 1) * pageSize)
+      const { rows } = await db.query<StudentRecord>(
+        `SELECT * FROM student ${where} ORDER BY full_name LIMIT ${limit} OFFSET ${offset}`,
+        params,
+      )
+      return rows
     },
 
-    count({ search, status }) {
+    async count({ search, status }) {
       const { where, params } = buildFilters({ search, status })
-      const row = db.prepare(`SELECT COUNT(*) as total FROM student ${where}`).get(...params) as {
-        total: number
-      }
-      return row.total
+      const { rows } = await db.query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total FROM student ${where}`,
+        params,
+      )
+      return rows[0]!.total
     },
 
     findById,
 
-    findByUserId(userId) {
-      return db.prepare('SELECT * FROM student WHERE user_id = ?').get(userId) as
-        | StudentRecord
-        | undefined
+    async findByUserId(userId) {
+      const { rows } = await db.query<StudentRecord>('SELECT * FROM student WHERE user_id = $1', [userId])
+      return rows[0]
     },
 
-    create({ id, fullName, document, phone, birthDate, categoryId }) {
-      db.prepare(
+    async create({ id, fullName, document, phone, birthDate, categoryId }) {
+      const { rows } = await db.query<StudentRecord>(
         `INSERT INTO student (id, full_name, document, phone, birth_date, category_id, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')`,
-      ).run(id, fullName, document, phone, birthDate, categoryId)
-      return findById(id)!
+         VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')
+         RETURNING *`,
+        [id, fullName, document, phone, birthDate, categoryId],
+      )
+      return rows[0]!
     },
 
-    update(id, input) {
-      const existing = findById(id)
+    async update(id, input) {
+      const existing = await findById(id)
       if (!existing) return undefined
 
       const fullName = input.fullName ?? existing.full_name
@@ -117,26 +123,30 @@ export function createStudentModel(db: DatabaseSync): StudentModel {
       const birthDate = input.birthDate !== undefined ? input.birthDate : existing.birth_date
       const categoryId = input.categoryId ?? existing.category_id
 
-      db.prepare(
+      const { rows } = await db.query<StudentRecord>(
         `UPDATE student
-         SET full_name = ?, document = ?, phone = ?, birth_date = ?, category_id = ?, updated_at = datetime('now')
-         WHERE id = ?`,
-      ).run(fullName, document, phone, birthDate, categoryId, id)
-
-      return findById(id)
-    },
-
-    updateStatus(id, status) {
-      db.prepare(`UPDATE student SET status = ?, updated_at = datetime('now') WHERE id = ?`).run(status, id)
-      return findById(id)
-    },
-
-    linkUserId(id, userId) {
-      db.prepare(`UPDATE student SET user_id = ?, updated_at = datetime('now') WHERE id = ?`).run(
-        userId,
-        id,
+         SET full_name = $1, document = $2, phone = $3, birth_date = $4, category_id = $5, updated_at = now()
+         WHERE id = $6
+         RETURNING *`,
+        [fullName, document, phone, birthDate, categoryId, id],
       )
-      return findById(id)
+      return rows[0]
+    },
+
+    async updateStatus(id, status) {
+      const { rows } = await db.query<StudentRecord>(
+        `UPDATE student SET status = $1, updated_at = now() WHERE id = $2 RETURNING *`,
+        [status, id],
+      )
+      return rows[0]
+    },
+
+    async linkUserId(id, userId) {
+      const { rows } = await db.query<StudentRecord>(
+        `UPDATE student SET user_id = $1, updated_at = now() WHERE id = $2 RETURNING *`,
+        [userId, id],
+      )
+      return rows[0]
     },
   }
 }

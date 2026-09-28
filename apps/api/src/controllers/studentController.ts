@@ -18,28 +18,28 @@ function requireIdParam(req: Request): string {
 
 export function createStudentController({ studentService }: StudentControllerDeps) {
   return {
-    list(req: Request, res: Response) {
-      const result = studentService.list(req.query)
+    async list(req: Request, res: Response) {
+      const result = await studentService.list(req.query)
       res.status(200).json(presentPage(result, presentStudent))
     },
 
-    register(req: Request, res: Response) {
-      const student = studentService.register(req.body ?? {})
+    async register(req: Request, res: Response) {
+      const student = await studentService.register(req.body ?? {})
       res.status(201).json(presentStudent(student))
     },
 
-    getById(req: Request, res: Response) {
-      const student = studentService.getById(requireIdParam(req))
+    async getById(req: Request, res: Response) {
+      const student = await studentService.getById(requireIdParam(req))
       res.status(200).json(presentStudent(student))
     },
 
-    update(req: Request, res: Response) {
-      const student = studentService.update(requireIdParam(req), req.body ?? {})
+    async update(req: Request, res: Response) {
+      const student = await studentService.update(requireIdParam(req), req.body ?? {})
       res.status(200).json(presentStudent(student))
     },
 
-    deactivate(req: Request, res: Response) {
-      const student = studentService.deactivate(requireIdParam(req))
+    async deactivate(req: Request, res: Response) {
+      const student = await studentService.deactivate(requireIdParam(req))
       res.status(200).json(presentStudent(student))
     },
 
@@ -48,13 +48,13 @@ export function createStudentController({ studentService }: StudentControllerDep
       res.status(201).json(presentStudent(student))
     },
 
-    getMe(req: Request, res: Response) {
-      const student = studentService.getOwnProfile(req.user!.id)
+    async getMe(req: Request, res: Response) {
+      const student = await studentService.getOwnProfile(req.user!.id)
       res.status(200).json(presentStudent(student))
     },
 
-    updateMe(req: Request, res: Response) {
-      const student = studentService.updateOwnProfile(req.user!.id, req.body ?? {})
+    async updateMe(req: Request, res: Response) {
+      const student = await studentService.updateOwnProfile(req.user!.id, req.body ?? {})
       res.status(200).json(presentStudent(student))
     },
   }

@@ -1,4 +1,4 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../src/database/connection.ts'
 import { randomUUID } from 'node:crypto'
 import { hashPassword } from '../src/shared/passwordHash.ts'
 import { createStudentModel } from '../src/models/studentModel.ts'
@@ -12,16 +12,20 @@ import { createAppointmentService } from '../src/models/appointmentService.ts'
 export const DEMO_USER_EMAIL = 'admin@autoagenda.local'
 export const DEMO_USER_PASSWORD = 'Demo@123'
 
-export async function seedDemoUser(db: DatabaseSync): Promise<void> {
-  const existing = db.prepare('SELECT id FROM user LIMIT 1').get()
-  if (existing) return
+// Every seed function is idempotent (skips if its table already has rows) and inserts in
+// foreign-key order — user → student/instructor → vehicle → appointment — because
+// PostgreSQL enforces REFERENCES.
+export async function seedDemoUser(db: Database): Promise<void> {
+  const { rows: existing } = await db.query('SELECT id FROM "user" LIMIT 1')
+  if (existing.length > 0) return
 
   const passwordHash = await hashPassword(DEMO_USER_PASSWORD)
 
-  db.prepare(
-    `INSERT INTO user (id, email, password_hash, role, status)
-     VALUES (?, ?, ?, ?, ?)`,
-  ).run(randomUUID(), DEMO_USER_EMAIL, passwordHash, 'ADMIN', 'ACTIVE')
+  await db.query(
+    `INSERT INTO "user" (id, email, password_hash, role, status)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [randomUUID(), DEMO_USER_EMAIL, passwordHash, 'ADMIN', 'ACTIVE'],
+  )
 
   console.log(`Seeded demo user: ${DEMO_USER_EMAIL}`)
 }
@@ -43,20 +47,16 @@ const DEMO_STUDENTS = [
   { fullName: 'Elisa Nogueira Pinto', document: '12345678905', phone: '(11) 91234-5605', categoryCode: 'C' },
 ] as const
 
-export async function seedDemoStudents(db: DatabaseSync): Promise<void> {
-  const existing = db.prepare('SELECT id FROM student LIMIT 1').get()
-  if (existing) return
+async function loadCategoryIdsByCode(db: Database): Promise<Map<string, string>> {
+  const { rows } = await db.query<{ id: string; code: string }>('SELECT id, code FROM license_category')
+  return new Map(rows.map((category) => [category.code, category.id]))
+}
 
-  const categoryByCode = new Map(
-    (db.prepare('SELECT id, code FROM license_category').all() as { id: string; code: string }[]).map(
-      (category) => [category.code, category.id],
-    ),
-  )
+export async function seedDemoStudents(db: Database): Promise<void> {
+  const { rows: existing } = await db.query('SELECT id FROM student LIMIT 1')
+  if (existing.length > 0) return
 
-  const insert = db.prepare(
-    `INSERT INTO student (id, user_id, full_name, document, phone, category_id, status)
-     VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')`,
-  )
+  const categoryByCode = await loadCategoryIdsByCode(db)
 
   let linkedAccounts = 0
   for (const student of DEMO_STUDENTS) {
@@ -67,14 +67,19 @@ export async function seedDemoStudents(db: DatabaseSync): Promise<void> {
     if ('email' in student && student.email) {
       const passwordHash = await hashPassword(DEMO_STUDENT_PASSWORD)
       userId = randomUUID()
-      db.prepare(
-        `INSERT INTO user (id, email, password_hash, role, status)
-         VALUES (?, ?, ?, 'STUDENT', 'ACTIVE')`,
-      ).run(userId, student.email, passwordHash)
+      await db.query(
+        `INSERT INTO "user" (id, email, password_hash, role, status)
+         VALUES ($1, $2, $3, 'STUDENT', 'ACTIVE')`,
+        [userId, student.email, passwordHash],
+      )
       linkedAccounts += 1
     }
 
-    insert.run(randomUUID(), userId, student.fullName, student.document, student.phone, categoryId)
+    await db.query(
+      `INSERT INTO student (id, user_id, full_name, document, phone, category_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')`,
+      [randomUUID(), userId, student.fullName, student.document, student.phone, categoryId],
+    )
   }
 
   console.log(`Seeded ${DEMO_STUDENTS.length} demo students (${linkedAccounts} with login account)`)
@@ -93,25 +98,20 @@ const DEMO_VEHICLES = [
   },
 ] as const
 
-export function seedDemoVehicles(db: DatabaseSync): void {
-  const existing = db.prepare('SELECT id FROM vehicle LIMIT 1').get()
-  if (existing) return
+export async function seedDemoVehicles(db: Database): Promise<void> {
+  const { rows: existing } = await db.query('SELECT id FROM vehicle LIMIT 1')
+  if (existing.length > 0) return
 
-  const categoryByCode = new Map(
-    (db.prepare('SELECT id, code FROM license_category').all() as { id: string; code: string }[]).map(
-      (category) => [category.code, category.id],
-    ),
-  )
-
-  const insert = db.prepare(
-    `INSERT INTO vehicle (id, plate, brand, model, year, category_id, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  )
+  const categoryByCode = await loadCategoryIdsByCode(db)
 
   for (const vehicle of DEMO_VEHICLES) {
     const categoryId = categoryByCode.get(vehicle.categoryCode)
     if (!categoryId) continue
-    insert.run(randomUUID(), vehicle.plate, vehicle.brand, vehicle.model, vehicle.year, categoryId, vehicle.status)
+    await db.query(
+      `INSERT INTO vehicle (id, plate, brand, model, year, category_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [randomUUID(), vehicle.plate, vehicle.brand, vehicle.model, vehicle.year, categoryId, vehicle.status],
+    )
   }
 
   console.log(`Seeded ${DEMO_VEHICLES.length} demo vehicles`)
@@ -143,9 +143,9 @@ const DEMO_AVAILABILITY_WEEKDAYS = [1, 2, 3, 4, 5]
 const DEMO_AVAILABILITY_START_TIME = '08:00'
 const DEMO_AVAILABILITY_END_TIME = '18:00'
 
-export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
-  const existing = db.prepare('SELECT id FROM instructor LIMIT 1').get()
-  if (existing) return
+export async function seedDemoInstructors(db: Database): Promise<void> {
+  const { rows: existing } = await db.query('SELECT id FROM instructor LIMIT 1')
+  if (existing.length > 0) return
 
   const instructorAvailabilityModel = createInstructorAvailabilityModel(db)
 
@@ -153,26 +153,21 @@ export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
     const passwordHash = await hashPassword(DEMO_INSTRUCTOR_PASSWORD)
     const userId = randomUUID()
 
-    db.prepare(
-      `INSERT INTO user (id, email, password_hash, role, status)
-       VALUES (?, ?, ?, 'INSTRUCTOR', 'ACTIVE')`,
-    ).run(userId, instructor.email, passwordHash)
+    await db.query(
+      `INSERT INTO "user" (id, email, password_hash, role, status)
+       VALUES ($1, $2, $3, 'INSTRUCTOR', 'ACTIVE')`,
+      [userId, instructor.email, passwordHash],
+    )
 
     const instructorId = randomUUID()
-    db.prepare(
+    await db.query(
       `INSERT INTO instructor (id, user_id, full_name, document, credential_number, phone, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')`,
-    ).run(
-      instructorId,
-      userId,
-      instructor.fullName,
-      instructor.document,
-      instructor.credentialNumber,
-      instructor.phone,
+       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')`,
+      [instructorId, userId, instructor.fullName, instructor.document, instructor.credentialNumber, instructor.phone],
     )
 
     for (const weekday of DEMO_AVAILABILITY_WEEKDAYS) {
-      instructorAvailabilityModel.create({
+      await instructorAvailabilityModel.create({
         id: randomUUID(),
         instructorId,
         weekday,
@@ -187,22 +182,20 @@ export async function seedDemoInstructors(db: DatabaseSync): Promise<void> {
   )
 }
 
-export function seedDemoAppointments(db: DatabaseSync): void {
-  const existing = db.prepare('SELECT id FROM appointment LIMIT 1').get()
-  if (existing) return
+export async function seedDemoAppointments(db: Database): Promise<void> {
+  const { rows: existing } = await db.query('SELECT id FROM appointment LIMIT 1')
+  if (existing.length > 0) return
 
-  const admin = db.prepare('SELECT id FROM user WHERE email = ?').get(DEMO_USER_EMAIL) as
-    | { id: string }
-    | undefined
-  const student = db.prepare('SELECT id, category_id FROM student WHERE document = ?').get('12345678901') as
-    | { id: string; category_id: string }
-    | undefined
-  const instructor = db
-    .prepare('SELECT id FROM instructor WHERE credential_number = ?')
-    .get('CRED-0001') as { id: string } | undefined
-  const vehicle = db.prepare('SELECT id FROM vehicle WHERE plate = ?').get('ABC1D23') as
-    | { id: string }
-    | undefined
+  const admin = (await db.query<{ id: string }>('SELECT id FROM "user" WHERE email = $1', [DEMO_USER_EMAIL])).rows[0]
+  const student = (
+    await db.query<{ id: string; category_id: string }>('SELECT id, category_id FROM student WHERE document = $1', [
+      '12345678901',
+    ])
+  ).rows[0]
+  const instructor = (
+    await db.query<{ id: string }>('SELECT id FROM instructor WHERE credential_number = $1', ['CRED-0001'])
+  ).rows[0]
+  const vehicle = (await db.query<{ id: string }>('SELECT id FROM vehicle WHERE plate = $1', ['ABC1D23'])).rows[0]
 
   if (!admin || !student || !instructor || !vehicle) return
 
@@ -210,7 +203,7 @@ export function seedDemoAppointments(db: DatabaseSync): void {
   // API), rather than a raw insert — cheap extra confidence that the scheduling
   // algorithm actually works end to end.
   const appointmentService = createAppointmentService({
-    db,
+    database: db,
     appointmentModel: createAppointmentModel(db),
     studentModel: createStudentModel(db),
     instructorModel: createInstructorModel(db),
@@ -229,7 +222,7 @@ export function seedDemoAppointments(db: DatabaseSync): void {
   startAt.setUTCHours(10, 0, 0, 0)
 
   try {
-    appointmentService.book(
+    await appointmentService.book(
       {
         studentId: student.id,
         instructorId: instructor.id,

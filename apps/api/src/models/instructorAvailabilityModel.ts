@@ -1,4 +1,4 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
 
 export interface InstructorAvailabilityRecord {
   id: string
@@ -19,41 +19,37 @@ export interface CreateInstructorAvailabilityInput {
 }
 
 export interface InstructorAvailabilityModel {
-  findByInstructorId(instructorId: string): InstructorAvailabilityRecord[]
-  findActiveByInstructorAndWeekday(instructorId: string, weekday: number): InstructorAvailabilityRecord[]
-  create(input: CreateInstructorAvailabilityInput): InstructorAvailabilityRecord
+  findByInstructorId(instructorId: string): Promise<InstructorAvailabilityRecord[]>
+  findActiveByInstructorAndWeekday(instructorId: string, weekday: number): Promise<InstructorAvailabilityRecord[]>
+  create(input: CreateInstructorAvailabilityInput): Promise<InstructorAvailabilityRecord>
 }
 
-export function createInstructorAvailabilityModel(
-  db: DatabaseSync,
-): InstructorAvailabilityModel {
-  function findById(id: string): InstructorAvailabilityRecord {
-    return db
-      .prepare('SELECT * FROM instructor_availability WHERE id = ?')
-      .get(id) as unknown as InstructorAvailabilityRecord
-  }
-
+export function createInstructorAvailabilityModel(db: Queryable): InstructorAvailabilityModel {
   return {
-    findByInstructorId(instructorId) {
-      return db
-        .prepare('SELECT * FROM instructor_availability WHERE instructor_id = ? ORDER BY weekday, start_time')
-        .all(instructorId) as unknown as InstructorAvailabilityRecord[]
+    async findByInstructorId(instructorId) {
+      const { rows } = await db.query<InstructorAvailabilityRecord>(
+        'SELECT * FROM instructor_availability WHERE instructor_id = $1 ORDER BY weekday, start_time',
+        [instructorId],
+      )
+      return rows
     },
 
-    findActiveByInstructorAndWeekday(instructorId, weekday) {
-      return db
-        .prepare(
-          'SELECT * FROM instructor_availability WHERE instructor_id = ? AND weekday = ? AND active = 1',
-        )
-        .all(instructorId, weekday) as unknown as InstructorAvailabilityRecord[]
+    async findActiveByInstructorAndWeekday(instructorId, weekday) {
+      const { rows } = await db.query<InstructorAvailabilityRecord>(
+        'SELECT * FROM instructor_availability WHERE instructor_id = $1 AND weekday = $2 AND active = 1',
+        [instructorId, weekday],
+      )
+      return rows
     },
 
-    create({ id, instructorId, weekday, startTime, endTime }) {
-      db.prepare(
+    async create({ id, instructorId, weekday, startTime, endTime }) {
+      const { rows } = await db.query<InstructorAvailabilityRecord>(
         `INSERT INTO instructor_availability (id, instructor_id, weekday, start_time, end_time)
-         VALUES (?, ?, ?, ?, ?)`,
-      ).run(id, instructorId, weekday, startTime, endTime)
-      return findById(id)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [id, instructorId, weekday, startTime, endTime],
+      )
+      return rows[0]!
     },
   }
 }

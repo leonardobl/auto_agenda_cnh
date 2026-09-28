@@ -10,12 +10,12 @@ interface HealthControllerDeps {
 // (the one exception to "controllers talk to *Service": there is no business rule here).
 export function createHealthController({ healthModel }: HealthControllerDeps) {
   return {
-    liveness(_req: Request, res: Response) {
+    async liveness(_req: Request, res: Response) {
       res.status(200).json(presentHealthOk())
     },
 
-    readiness(_req: Request, res: Response) {
-      if (healthModel.isDatabaseReachable()) {
+    async readiness(_req: Request, res: Response) {
+      if (await healthModel.isDatabaseReachable()) {
         res.status(200).json(presentHealthOk())
         return
       }

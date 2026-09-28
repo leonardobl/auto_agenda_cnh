@@ -1,7 +1,7 @@
 import type { LicenseCategoryModel, LicenseCategoryRecord } from './licenseCategoryModel.ts'
 
 export interface LicenseCategoryService {
-  list(): LicenseCategoryRecord[]
+  list(): Promise<LicenseCategoryRecord[]>
 }
 
 interface LicenseCategoryServiceDeps {

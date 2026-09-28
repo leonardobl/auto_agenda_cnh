@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../database/connection.ts'
+import { isUniqueViolation } from '../database/errors.ts'
 import { ApiError } from '../shared/ApiError.ts'
 import { hashPassword } from '../shared/passwordHash.ts'
+import { createStudentModel } from './studentModel.ts'
 import type { StudentModel, StudentRecord } from './studentModel.ts'
 import type { LicenseCategoryModel } from './licenseCategoryModel.ts'
-import type { UserModel } from './userModel.ts'
+import { createUserModel } from './userModel.ts'
 
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 50
@@ -50,21 +52,20 @@ export interface UpdateOwnProfileParams {
 }
 
 export interface StudentService {
-  list(params: ListStudentsParams): StudentListResult
-  register(params: CreateStudentParams): StudentRecord
-  getById(id: string): StudentRecord
-  update(id: string, params: UpdateStudentParams): StudentRecord
-  deactivate(id: string): StudentRecord
+  list(params: ListStudentsParams): Promise<StudentListResult>
+  register(params: CreateStudentParams): Promise<StudentRecord>
+  getById(id: string): Promise<StudentRecord>
+  update(id: string, params: UpdateStudentParams): Promise<StudentRecord>
+  deactivate(id: string): Promise<StudentRecord>
   createAccount(id: string, params: CreateAccountParams): Promise<StudentRecord>
-  getOwnProfile(userId: string): StudentRecord
-  updateOwnProfile(userId: string, params: UpdateOwnProfileParams): StudentRecord
+  getOwnProfile(userId: string): Promise<StudentRecord>
+  updateOwnProfile(userId: string, params: UpdateOwnProfileParams): Promise<StudentRecord>
 }
 
 interface StudentServiceDeps {
-  db: DatabaseSync
+  database: Database
   studentModel: StudentModel
   licenseCategoryModel: LicenseCategoryModel
-  userModel: UserModel
 }
 
 function parsePage(value: unknown): number {
@@ -82,41 +83,31 @@ function parseOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
-function isUniqueConstraintError(error: unknown, table: string, column: string): boolean {
-  return (
-    error instanceof Error &&
-    'code' in error &&
-    (error as { code?: string }).code === 'ERR_SQLITE_ERROR' &&
-    error.message.includes(`UNIQUE constraint failed: ${table}.${column}`)
-  )
-}
-
 export function createStudentService({
-  db,
+  database,
   studentModel,
   licenseCategoryModel,
-  userModel,
 }: StudentServiceDeps): StudentService {
-  function assertCategoryExists(categoryId: string): void {
-    const categories = licenseCategoryModel.findAll()
+  async function assertCategoryExists(categoryId: string): Promise<void> {
+    const categories = await licenseCategoryModel.findAll()
     if (!categories.some((category) => category.id === categoryId)) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'Categoria de CNH inválida.')
     }
   }
 
   return {
-    list({ page, pageSize, search, status }) {
+    async list({ page, pageSize, search, status }) {
       const parsedPage = parsePage(page)
       const parsedPageSize = parsePageSize(pageSize)
       const filters = { search: parseOptionalString(search), status: parseOptionalString(status) }
 
-      const items = studentModel.findMany({ page: parsedPage, pageSize: parsedPageSize, ...filters })
-      const total = studentModel.count(filters)
+      const items = await studentModel.findMany({ page: parsedPage, pageSize: parsedPageSize, ...filters })
+      const total = await studentModel.count(filters)
 
       return { items, page: parsedPage, pageSize: parsedPageSize, total }
     },
 
-    register({ fullName, document, phone, birthDate, categoryId }) {
+    async register({ fullName, document, phone, birthDate, categoryId }) {
       if (
         typeof fullName !== 'string' ||
         !fullName.trim() ||
@@ -128,13 +119,13 @@ export function createStudentService({
         throw new ApiError(400, 'VALIDATION_ERROR', 'Nome completo, telefone e categoria são obrigatórios.')
       }
 
-      assertCategoryExists(categoryId)
+      await assertCategoryExists(categoryId)
 
       const normalizedDocument = parseOptionalString(document) ?? null
       const normalizedBirthDate = parseOptionalString(birthDate) ?? null
 
       try {
-        return studentModel.create({
+        return await studentModel.create({
           id: randomUUID(),
           fullName: fullName.trim(),
           document: normalizedDocument,
@@ -143,28 +134,28 @@ export function createStudentService({
           categoryId,
         })
       } catch (error) {
-        if (isUniqueConstraintError(error, 'student', 'document')) {
+        if (isUniqueViolation(error, 'student_document_key')) {
           throw new ApiError(409, 'STUDENT_DOCUMENT_CONFLICT', 'Já existe um aluno com este documento.')
         }
         throw error
       }
     },
 
-    getById(id) {
-      const student = studentModel.findById(id)
+    async getById(id) {
+      const student = await studentModel.findById(id)
       if (!student) {
         throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Aluno não encontrado.')
       }
       return student
     },
 
-    update(id, { fullName, document, phone, birthDate, categoryId }) {
+    async update(id, { fullName, document, phone, birthDate, categoryId }) {
       if (typeof categoryId === 'string' && categoryId) {
-        assertCategoryExists(categoryId)
+        await assertCategoryExists(categoryId)
       }
 
       try {
-        const updated = studentModel.update(id, {
+        const updated = await studentModel.update(id, {
           fullName: typeof fullName === 'string' ? fullName.trim() : undefined,
           document: document === undefined ? undefined : (parseOptionalString(document) ?? null),
           phone: typeof phone === 'string' ? phone.trim() : undefined,
@@ -178,23 +169,23 @@ export function createStudentService({
 
         return updated
       } catch (error) {
-        if (isUniqueConstraintError(error, 'student', 'document')) {
+        if (isUniqueViolation(error, 'student_document_key')) {
           throw new ApiError(409, 'STUDENT_DOCUMENT_CONFLICT', 'Já existe um aluno com este documento.')
         }
         throw error
       }
     },
 
-    deactivate(id) {
-      const student = studentModel.findById(id)
+    async deactivate(id) {
+      const student = await studentModel.findById(id)
       if (!student) {
         throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Aluno não encontrado.')
       }
-      return studentModel.updateStatus(id, 'INACTIVE')!
+      return (await studentModel.updateStatus(id, 'INACTIVE'))!
     },
 
     async createAccount(id, { email, password }) {
-      const student = studentModel.findById(id)
+      const student = await studentModel.findById(id)
       if (!student) {
         throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Aluno não encontrado.')
       }
@@ -212,45 +203,43 @@ export function createStudentService({
 
       const passwordHash = await hashPassword(password)
 
-      db.exec('BEGIN')
       try {
-        const user = userModel.create({
-          id: randomUUID(),
-          email: email.trim(),
-          passwordHash,
-          role: 'STUDENT',
-          status: 'ACTIVE',
+        // user insert + student link commit together; the models are rebuilt on the
+        // transaction's client so both statements share it.
+        return await database.withTransaction(async (tx) => {
+          const user = await createUserModel(tx).create({
+            id: randomUUID(),
+            email: email.trim(),
+            passwordHash,
+            role: 'STUDENT',
+            status: 'ACTIVE',
+          })
+
+          return (await createStudentModel(tx).linkUserId(id, user.id))!
         })
-
-        const updated = studentModel.linkUserId(id, user.id)!
-
-        db.exec('COMMIT')
-        return updated
       } catch (error) {
-        db.exec('ROLLBACK')
-
-        if (isUniqueConstraintError(error, 'user', 'email')) {
+        if (isUniqueViolation(error, 'user_email_key')) {
           throw new ApiError(409, 'STUDENT_EMAIL_CONFLICT', 'Já existe uma conta com este e-mail.')
         }
         throw error
       }
     },
 
-    getOwnProfile(userId) {
-      const student = studentModel.findByUserId(userId)
+    async getOwnProfile(userId) {
+      const student = await studentModel.findByUserId(userId)
       if (!student) {
         throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Aluno não encontrado.')
       }
       return student
     },
 
-    updateOwnProfile(userId, { phone }) {
-      const student = studentModel.findByUserId(userId)
+    async updateOwnProfile(userId, { phone }) {
+      const student = await studentModel.findByUserId(userId)
       if (!student) {
         throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Aluno não encontrado.')
       }
 
-      const updated = studentModel.update(student.id, {
+      const updated = await studentModel.update(student.id, {
         phone: typeof phone === 'string' ? phone.trim() : undefined,
       })
 

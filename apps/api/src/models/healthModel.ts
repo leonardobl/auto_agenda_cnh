@@ -1,14 +1,14 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
 
 export interface HealthModel {
-  isDatabaseReachable(): boolean
+  isDatabaseReachable(): Promise<boolean>
 }
 
-export function createHealthModel(db: DatabaseSync): HealthModel {
+export function createHealthModel(db: Queryable): HealthModel {
   return {
-    isDatabaseReachable() {
+    async isDatabaseReachable() {
       try {
-        db.prepare('SELECT 1').get()
+        await db.query('SELECT 1')
         return true
       } catch {
         return false

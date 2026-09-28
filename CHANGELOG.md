@@ -8,10 +8,14 @@ Todas as mudanças relevantes deste projeto são documentadas neste arquivo, org
 
 - Back-end reorganizado no padrão MVC, como pede o enunciado do projeto: `routes/` (Router), `controllers/` (Controller), `models/` (Model — acesso ao banco e regras de negócio) e `views/` (View — formato do JSON de resposta). Nenhuma rota nem resposta da API mudou.
 - Documentação atualizada: seção "Arquitetura do back-end (MVC)" no README com o fluxo de uma requisição e a tabela camada → diretório.
+- Banco de dados trocado de SQLite para PostgreSQL, como prevê a especificação acadêmica. A API continua respondendo exatamente o mesmo; `created_at`/`updated_at` passam a vir em formato ISO 8601.
+- Configuração local: o banco não é mais criado no `yarn install`. Agora é `docker compose -f infra/docker-compose.yml up -d`, `yarn install` e `yarn workspace @auto-agenda-cnh/api db:setup`, com a variável `DATABASE_URL` no lugar de `DB_PATH` (README atualizado).
 
 ### Adicionado
 
-- Testes do back-end (`yarn workspace @auto-agenda-cnh/api test`): suíte que sobe a API sobre um banco em memória, chama todos os endpoints e compara as respostas com um snapshot, garantindo que o comportamento HTTP não muda.
+- Docker Compose (`infra/docker-compose.yml`) com o PostgreSQL de desenvolvimento e scripts `db:up`/`db:down`.
+- Proteção contra reserva duplicada no próprio banco: duas aulas do mesmo aluno, instrutor ou veículo não podem se sobrepor, mesmo com pedidos simultâneos (aulas em sequência continuam permitidas). Testes de concorrência cobrem o caso.
+- Testes do back-end (`yarn workspace @auto-agenda-cnh/api test`): suíte que sobe a API sobre um schema temporário do PostgreSQL, chama todos os endpoints e compara as respostas com um snapshot, garantindo que o comportamento HTTP não muda.
 
 ## 2026-09-18
 

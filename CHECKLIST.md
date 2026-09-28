@@ -45,7 +45,7 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 - [x] Migrations versionadas + seed de dados de demonstração
 - [x] Back-end em MVC (`routes/` `controllers/` `models/` `views/`) — `migrate-api-to-mvc`. Exigência do enunciado do PI II; mesmas rotas e respostas de antes, travadas por uma suíte de caracterização (`node:test` + snapshot)
 - [ ] Testes do back-end (regras de negócio, agendamento, permissões) — próxima change; a suíte de caracterização é só a rede de segurança da migração
-- [ ] Troca de SGBD (SQLite → banco mais convencional, previsto em `docs/`) — change separada, depois desta
+- [x] Troca de SGBD (SQLite → PostgreSQL, como previsto em `docs/`) — `migrate-db-to-postgres`. Docker Compose para o banco local, migrations em dialeto Postgres, models/services assíncronos e conflito de horário garantido por *exclusion constraints*; mesmas respostas HTTP (snapshot inalterado)
 
 ## Como manter este checklist
 

@@ -2,10 +2,10 @@ export interface Env {
   nodeEnv: string
   port: number
   appOrigin: string
-  dbPath: string
+  databaseUrl: string
 }
 
-const REQUIRED_VARS = ['NODE_ENV', 'PORT', 'APP_ORIGIN'] as const
+const REQUIRED_VARS = ['NODE_ENV', 'PORT', 'APP_ORIGIN', 'DATABASE_URL'] as const
 
 export function loadEnv(): Env {
   const missing = REQUIRED_VARS.filter((key) => !process.env[key])
@@ -28,6 +28,6 @@ export function loadEnv(): Env {
     nodeEnv: process.env.NODE_ENV!,
     port,
     appOrigin: process.env.APP_ORIGIN!,
-    dbPath: process.env.DB_PATH || 'data/app.db',
+    databaseUrl: process.env.DATABASE_URL!,
   }
 }

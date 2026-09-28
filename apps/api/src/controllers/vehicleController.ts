@@ -18,23 +18,23 @@ function requireIdParam(req: Request): string {
 
 export function createVehicleController({ vehicleService }: VehicleControllerDeps) {
   return {
-    list(req: Request, res: Response) {
-      const result = vehicleService.list(req.query)
+    async list(req: Request, res: Response) {
+      const result = await vehicleService.list(req.query)
       res.status(200).json(presentPage(result, presentVehicle))
     },
 
-    register(req: Request, res: Response) {
-      const vehicle = vehicleService.register(req.body ?? {})
+    async register(req: Request, res: Response) {
+      const vehicle = await vehicleService.register(req.body ?? {})
       res.status(201).json(presentVehicle(vehicle))
     },
 
-    getById(req: Request, res: Response) {
-      const vehicle = vehicleService.getById(requireIdParam(req))
+    async getById(req: Request, res: Response) {
+      const vehicle = await vehicleService.getById(requireIdParam(req))
       res.status(200).json(presentVehicle(vehicle))
     },
 
-    update(req: Request, res: Response) {
-      const vehicle = vehicleService.update(requireIdParam(req), req.body ?? {})
+    async update(req: Request, res: Response) {
+      const vehicle = await vehicleService.update(requireIdParam(req), req.body ?? {})
       res.status(200).json(presentVehicle(vehicle))
     },
   }

@@ -1,4 +1,5 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
+import { bind } from '../database/params.ts'
 
 export interface InstructorRecord {
   id: string
@@ -41,80 +42,85 @@ export interface UpdateInstructorInput {
 }
 
 export interface InstructorModel {
-  findMany(params: FindManyParams): InstructorRecord[]
-  count(filters: InstructorFilters): number
-  findById(id: string): InstructorRecord | undefined
-  findByUserId(userId: string): InstructorRecord | undefined
-  create(input: CreateInstructorInput): InstructorRecord
-  update(id: string, input: UpdateInstructorInput): InstructorRecord | undefined
+  findMany(params: FindManyParams): Promise<InstructorRecord[]>
+  count(filters: InstructorFilters): Promise<number>
+  findById(id: string): Promise<InstructorRecord | undefined>
+  findByUserId(userId: string): Promise<InstructorRecord | undefined>
+  create(input: CreateInstructorInput): Promise<InstructorRecord>
+  update(id: string, input: UpdateInstructorInput): Promise<InstructorRecord | undefined>
 }
 
 const SELECT_WITH_EMAIL = `
-  SELECT instructor.*, user.email as email
+  SELECT instructor.*, "user".email AS email
   FROM instructor
-  JOIN user ON user.id = instructor.user_id
+  JOIN "user" ON "user".id = instructor.user_id
 `
 
-function buildFilters({ search, status }: InstructorFilters): { where: string; params: string[] } {
+function buildFilters({ search, status }: InstructorFilters): { where: string; params: unknown[] } {
   const clauses: string[] = []
-  const params: string[] = []
+  const params: unknown[] = []
 
   if (search) {
-    clauses.push('(instructor.full_name LIKE ? OR instructor.document LIKE ? OR instructor.credential_number LIKE ?)')
-    const like = `%${search}%`
-    params.push(like, like, like)
+    const like = bind(params, `%${search}%`)
+    clauses.push(
+      `(instructor.full_name ILIKE ${like} OR instructor.document ILIKE ${like} OR instructor.credential_number ILIKE ${like})`,
+    )
   }
 
   if (status) {
-    clauses.push('instructor.status = ?')
-    params.push(status)
+    clauses.push(`instructor.status = ${bind(params, status)}`)
   }
 
   return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params }
 }
 
-export function createInstructorModel(db: DatabaseSync): InstructorModel {
-  function findById(id: string): InstructorRecord | undefined {
-    return db
-      .prepare(`${SELECT_WITH_EMAIL} WHERE instructor.id = ?`)
-      .get(id) as InstructorRecord | undefined
+export function createInstructorModel(db: Queryable): InstructorModel {
+  async function findById(id: string): Promise<InstructorRecord | undefined> {
+    const { rows } = await db.query<InstructorRecord>(`${SELECT_WITH_EMAIL} WHERE instructor.id = $1`, [id])
+    return rows[0]
   }
 
   return {
-    findMany({ page, pageSize, search, status }) {
+    async findMany({ page, pageSize, search, status }) {
       const { where, params } = buildFilters({ search, status })
-      const offset = (page - 1) * pageSize
-      return db
-        .prepare(`${SELECT_WITH_EMAIL} ${where} ORDER BY instructor.full_name LIMIT ? OFFSET ?`)
-        .all(...params, pageSize, offset) as unknown as InstructorRecord[]
+      const limit = bind(params, pageSize)
+      const offset = bind(params, (page - 1) * pageSize)
+      const { rows } = await db.query<InstructorRecord>(
+        `${SELECT_WITH_EMAIL} ${where} ORDER BY instructor.full_name LIMIT ${limit} OFFSET ${offset}`,
+        params,
+      )
+      return rows
     },
 
-    count({ search, status }) {
+    async count({ search, status }) {
       const { where, params } = buildFilters({ search, status })
-      const row = db
-        .prepare(`SELECT COUNT(*) as total FROM instructor ${where}`)
-        .get(...params) as { total: number }
-      return row.total
+      const { rows } = await db.query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total FROM instructor ${where}`,
+        params,
+      )
+      return rows[0]!.total
     },
 
     findById,
 
-    findByUserId(userId) {
-      return db
-        .prepare(`${SELECT_WITH_EMAIL} WHERE instructor.user_id = ?`)
-        .get(userId) as InstructorRecord | undefined
+    async findByUserId(userId) {
+      const { rows } = await db.query<InstructorRecord>(`${SELECT_WITH_EMAIL} WHERE instructor.user_id = $1`, [
+        userId,
+      ])
+      return rows[0]
     },
 
-    create({ id, userId, fullName, document, credentialNumber, phone }) {
-      db.prepare(
+    async create({ id, userId, fullName, document, credentialNumber, phone }) {
+      await db.query(
         `INSERT INTO instructor (id, user_id, full_name, document, credential_number, phone, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')`,
-      ).run(id, userId, fullName, document, credentialNumber, phone)
-      return findById(id)!
+         VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE')`,
+        [id, userId, fullName, document, credentialNumber, phone],
+      )
+      return (await findById(id))!
     },
 
-    update(id, input) {
-      const existing = findById(id)
+    async update(id, input) {
+      const existing = await findById(id)
       if (!existing) return undefined
 
       const fullName = input.fullName ?? existing.full_name
@@ -123,12 +129,14 @@ export function createInstructorModel(db: DatabaseSync): InstructorModel {
       const phone = input.phone ?? existing.phone
       const status = input.status ?? existing.status
 
-      db.prepare(
+      await db.query(
         `UPDATE instructor
-         SET full_name = ?, document = ?, credential_number = ?, phone = ?, status = ?, updated_at = datetime('now')
-         WHERE id = ?`,
-      ).run(fullName, document, credentialNumber, phone, status, id)
+         SET full_name = $1, document = $2, credential_number = $3, phone = $4, status = $5, updated_at = now()
+         WHERE id = $6`,
+        [fullName, document, credentialNumber, phone, status, id],
+      )
 
+      // Re-read (not RETURNING *): the record includes the joined login e-mail.
       return findById(id)
     },
   }

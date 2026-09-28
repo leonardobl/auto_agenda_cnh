@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../database/connection.ts'
+import { isUniqueViolation } from '../database/errors.ts'
 import { ApiError } from '../shared/ApiError.ts'
 import { hashPassword } from '../shared/passwordHash.ts'
+import { createInstructorModel } from './instructorModel.ts'
 import type { InstructorModel, InstructorRecord } from './instructorModel.ts'
-import type { UserModel } from './userModel.ts'
+import { createUserModel } from './userModel.ts'
 
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 50
@@ -45,17 +47,16 @@ export interface UpdateOwnProfileParams {
 }
 
 export interface InstructorService {
-  list(params: ListInstructorsParams): InstructorListResult
+  list(params: ListInstructorsParams): Promise<InstructorListResult>
   register(params: RegisterInstructorParams): Promise<InstructorRecord>
-  getById(id: string): InstructorRecord
-  update(id: string, params: UpdateInstructorParams): InstructorRecord
-  getOwnProfile(userId: string): InstructorRecord
-  updateOwnProfile(userId: string, params: UpdateOwnProfileParams): InstructorRecord
+  getById(id: string): Promise<InstructorRecord>
+  update(id: string, params: UpdateInstructorParams): Promise<InstructorRecord>
+  getOwnProfile(userId: string): Promise<InstructorRecord>
+  updateOwnProfile(userId: string, params: UpdateOwnProfileParams): Promise<InstructorRecord>
 }
 
 interface InstructorServiceDeps {
-  db: DatabaseSync
-  userModel: UserModel
+  database: Database
   instructorModel: InstructorModel
 }
 
@@ -74,28 +75,18 @@ function parseOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
-function isUniqueConstraintError(error: unknown, table: string, column: string): boolean {
-  return (
-    error instanceof Error &&
-    'code' in error &&
-    (error as { code?: string }).code === 'ERR_SQLITE_ERROR' &&
-    error.message.includes(`UNIQUE constraint failed: ${table}.${column}`)
-  )
-}
-
 export function createInstructorService({
-  db,
-  userModel,
+  database,
   instructorModel,
 }: InstructorServiceDeps): InstructorService {
   return {
-    list({ page, pageSize, search, status }) {
+    async list({ page, pageSize, search, status }) {
       const parsedPage = parsePage(page)
       const parsedPageSize = parsePageSize(pageSize)
       const filters = { search: parseOptionalString(search), status: parseOptionalString(status) }
 
-      const items = instructorModel.findMany({ page: parsedPage, pageSize: parsedPageSize, ...filters })
-      const total = instructorModel.count(filters)
+      const items = await instructorModel.findMany({ page: parsedPage, pageSize: parsedPageSize, ...filters })
+      const total = await instructorModel.count(filters)
 
       return { items, page: parsedPage, pageSize: parsedPageSize, total }
     },
@@ -123,58 +114,56 @@ export function createInstructorService({
       const passwordHash = await hashPassword(password)
       const normalizedDocument = parseOptionalString(document) ?? null
 
-      db.exec('BEGIN')
       try {
-        const user = userModel.create({
-          id: randomUUID(),
-          email: email.trim(),
-          passwordHash,
-          role: 'INSTRUCTOR',
-          status: 'ACTIVE',
-        })
+        // user + instructor rows commit together (or not at all); the models are rebuilt
+        // on the transaction's client so both inserts share it.
+        return await database.withTransaction(async (tx) => {
+          const user = await createUserModel(tx).create({
+            id: randomUUID(),
+            email: email.trim(),
+            passwordHash,
+            role: 'INSTRUCTOR',
+            status: 'ACTIVE',
+          })
 
-        const instructor = instructorModel.create({
-          id: randomUUID(),
-          userId: user.id,
-          fullName: fullName.trim(),
-          document: normalizedDocument,
-          credentialNumber: credentialNumber.trim(),
-          phone: phone.trim(),
+          return createInstructorModel(tx).create({
+            id: randomUUID(),
+            userId: user.id,
+            fullName: fullName.trim(),
+            document: normalizedDocument,
+            credentialNumber: credentialNumber.trim(),
+            phone: phone.trim(),
+          })
         })
-
-        db.exec('COMMIT')
-        return instructor
       } catch (error) {
-        db.exec('ROLLBACK')
-
-        if (isUniqueConstraintError(error, 'user', 'email')) {
+        if (isUniqueViolation(error, 'user_email_key')) {
           throw new ApiError(409, 'INSTRUCTOR_EMAIL_CONFLICT', 'Já existe uma conta com este e-mail.')
         }
-        if (isUniqueConstraintError(error, 'instructor', 'credential_number')) {
+        if (isUniqueViolation(error, 'instructor_credential_number_key')) {
           throw new ApiError(
             409,
             'INSTRUCTOR_CREDENTIAL_CONFLICT',
             'Já existe um instrutor com este registro profissional.',
           )
         }
-        if (isUniqueConstraintError(error, 'instructor', 'document')) {
+        if (isUniqueViolation(error, 'instructor_document_key')) {
           throw new ApiError(409, 'INSTRUCTOR_DOCUMENT_CONFLICT', 'Já existe um instrutor com este documento.')
         }
         throw error
       }
     },
 
-    getById(id) {
-      const instructor = instructorModel.findById(id)
+    async getById(id) {
+      const instructor = await instructorModel.findById(id)
       if (!instructor) {
         throw new ApiError(404, 'INSTRUCTOR_NOT_FOUND', 'Instrutor não encontrado.')
       }
       return instructor
     },
 
-    update(id, { fullName, document, credentialNumber, phone, status }) {
+    async update(id, { fullName, document, credentialNumber, phone, status }) {
       try {
-        const updated = instructorModel.update(id, {
+        const updated = await instructorModel.update(id, {
           fullName: typeof fullName === 'string' ? fullName.trim() : undefined,
           document: document === undefined ? undefined : (parseOptionalString(document) ?? null),
           credentialNumber: typeof credentialNumber === 'string' ? credentialNumber.trim() : undefined,
@@ -188,35 +177,35 @@ export function createInstructorService({
 
         return updated
       } catch (error) {
-        if (isUniqueConstraintError(error, 'instructor', 'credential_number')) {
+        if (isUniqueViolation(error, 'instructor_credential_number_key')) {
           throw new ApiError(
             409,
             'INSTRUCTOR_CREDENTIAL_CONFLICT',
             'Já existe um instrutor com este registro profissional.',
           )
         }
-        if (isUniqueConstraintError(error, 'instructor', 'document')) {
+        if (isUniqueViolation(error, 'instructor_document_key')) {
           throw new ApiError(409, 'INSTRUCTOR_DOCUMENT_CONFLICT', 'Já existe um instrutor com este documento.')
         }
         throw error
       }
     },
 
-    getOwnProfile(userId) {
-      const instructor = instructorModel.findByUserId(userId)
+    async getOwnProfile(userId) {
+      const instructor = await instructorModel.findByUserId(userId)
       if (!instructor) {
         throw new ApiError(404, 'INSTRUCTOR_NOT_FOUND', 'Instrutor não encontrado.')
       }
       return instructor
     },
 
-    updateOwnProfile(userId, { phone }) {
-      const instructor = instructorModel.findByUserId(userId)
+    async updateOwnProfile(userId, { phone }) {
+      const instructor = await instructorModel.findByUserId(userId)
       if (!instructor) {
         throw new ApiError(404, 'INSTRUCTOR_NOT_FOUND', 'Instrutor não encontrado.')
       }
 
-      const updated = instructorModel.update(instructor.id, {
+      const updated = await instructorModel.update(instructor.id, {
         phone: typeof phone === 'string' ? phone.trim() : undefined,
       })
 

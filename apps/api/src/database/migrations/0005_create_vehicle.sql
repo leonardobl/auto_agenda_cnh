@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS vehicle (
   year INTEGER NOT NULL,
   category_id TEXT NOT NULL REFERENCES license_category(id),
   status TEXT NOT NULL DEFAULT 'ACTIVE',
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

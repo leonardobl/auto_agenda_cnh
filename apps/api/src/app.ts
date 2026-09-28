@@ -1,7 +1,7 @@
 import express, { type Express } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from './database/connection.ts'
 import { healthRoutes } from './routes/healthRoutes.ts'
 import { authRoutes } from './routes/authRoutes.ts'
 import { studentRoutes } from './routes/studentRoutes.ts'
@@ -13,7 +13,7 @@ import { errorHandler } from './middlewares/errorHandler.ts'
 
 interface CreateAppOptions {
   appOrigin: string
-  db: DatabaseSync
+  db: Database
 }
 
 export function createApp({ appOrigin, db }: CreateAppOptions): Express {

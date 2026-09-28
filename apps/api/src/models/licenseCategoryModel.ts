@@ -1,4 +1,4 @@
-import type { DatabaseSync } from 'node:sqlite'
+import type { Queryable } from '../database/connection.ts'
 
 export interface LicenseCategoryRecord {
   id: string
@@ -7,15 +7,14 @@ export interface LicenseCategoryRecord {
 }
 
 export interface LicenseCategoryModel {
-  findAll(): LicenseCategoryRecord[]
+  findAll(): Promise<LicenseCategoryRecord[]>
 }
 
-export function createLicenseCategoryModel(db: DatabaseSync): LicenseCategoryModel {
+export function createLicenseCategoryModel(db: Queryable): LicenseCategoryModel {
   return {
-    findAll() {
-      return db
-        .prepare('SELECT * FROM license_category ORDER BY code')
-        .all() as unknown as LicenseCategoryRecord[]
+    async findAll() {
+      const { rows } = await db.query<LicenseCategoryRecord>('SELECT * FROM license_category ORDER BY code')
+      return rows
     },
   }
 }

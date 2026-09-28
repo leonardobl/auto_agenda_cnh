@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../database/connection.ts'
 import { createUserModel } from '../models/userModel.ts'
 import { createSessionModel } from '../models/sessionModel.ts'
 import { createPasswordResetTokenModel } from '../models/passwordResetTokenModel.ts'
@@ -8,7 +8,7 @@ import { createAuthController } from '../controllers/authController.ts'
 import { requireAuth } from '../middlewares/requireAuth.ts'
 
 interface AuthRoutesDeps {
-  db: DatabaseSync
+  db: Database
   appOrigin: string
 }
 

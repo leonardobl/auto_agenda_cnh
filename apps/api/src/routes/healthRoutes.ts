@@ -1,10 +1,10 @@
 import { Router } from 'express'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../database/connection.ts'
 import { createHealthModel } from '../models/healthModel.ts'
 import { createHealthController } from '../controllers/healthController.ts'
 
 interface HealthRoutesDeps {
-  db: DatabaseSync
+  db: Database
 }
 
 export function healthRoutes({ db }: HealthRoutesDeps): Router {

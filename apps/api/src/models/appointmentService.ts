@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Database } from '../database/connection.ts'
+import { isExclusionViolation } from '../database/errors.ts'
 import { ApiError } from '../shared/ApiError.ts'
+import { createAppointmentModel } from './appointmentModel.ts'
 import type { AppointmentModel, AppointmentRecord } from './appointmentModel.ts'
 import type { StudentModel } from './studentModel.ts'
 import type { InstructorModel } from './instructorModel.ts'
@@ -67,13 +69,13 @@ export interface Requester {
 }
 
 export interface AppointmentService {
-  searchSlots(params: SearchSlotsParams, requester: Requester): AvailableSlot[]
-  book(params: BookAppointmentParams, requester: Requester): AppointmentRecord
-  list(params: ListAppointmentsParams, requester: Requester): AppointmentListResult
+  searchSlots(params: SearchSlotsParams, requester: Requester): Promise<AvailableSlot[]>
+  book(params: BookAppointmentParams, requester: Requester): Promise<AppointmentRecord>
+  list(params: ListAppointmentsParams, requester: Requester): Promise<AppointmentListResult>
 }
 
 interface AppointmentServiceDeps {
-  db: DatabaseSync
+  database: Database
   appointmentModel: AppointmentModel
   studentModel: StudentModel
   instructorModel: InstructorModel
@@ -126,7 +128,7 @@ function toMinutes(time: string): number {
 }
 
 export function createAppointmentService({
-  db,
+  database,
   appointmentModel,
   studentModel,
   instructorModel,
@@ -139,29 +141,29 @@ export function createAppointmentService({
   // outside any block — no declared windows means never available, a deliberate
   // change from this project's earlier "every active instructor is always
   // available" simplification (see instructor-availability's design.md).
-  function isInstructorAvailable(instructorId: string, start: Date, end: Date): boolean {
+  async function isInstructorAvailable(instructorId: string, start: Date, end: Date): Promise<boolean> {
     const weekday = start.getUTCDay()
     const startMinutes = start.getUTCHours() * 60 + start.getUTCMinutes()
     const endMinutes = end.getUTCHours() * 60 + end.getUTCMinutes()
 
-    const windows = instructorAvailabilityModel.findActiveByInstructorAndWeekday(instructorId, weekday)
+    const windows = await instructorAvailabilityModel.findActiveByInstructorAndWeekday(instructorId, weekday)
     const withinWindow = windows.some(
       (window) => startMinutes >= toMinutes(window.start_time) && endMinutes <= toMinutes(window.end_time),
     )
     if (!withinWindow) return false
 
-    return !instructorBlockModel.isBlocked(instructorId, start.toISOString(), end.toISOString())
+    return !(await instructorBlockModel.isBlocked(instructorId, start.toISOString(), end.toISOString()))
   }
 
   return {
-    searchSlots({ studentId, categoryId, dateFrom, dateTo, durationMinutes }, requester) {
+    async searchSlots({ studentId, categoryId, dateFrom, dateTo, durationMinutes }, requester) {
       // A STUDENT caller can only ever search for themselves, in their own registered
       // category — any studentId/categoryId sent in the request is ignored for this
       // role (see design.md's "self-service booking" decision).
       let effectiveStudentId = studentId
       let effectiveCategoryId = categoryId
       if (requester.role === 'STUDENT') {
-        const own = studentModel.findByUserId(requester.userId)
+        const own = await studentModel.findByUserId(requester.userId)
         if (!own) {
           throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
         }
@@ -176,7 +178,7 @@ export function createAppointmentService({
         throw new ApiError(400, 'VALIDATION_ERROR', 'Informe a categoria.')
       }
 
-      const student = studentModel.findById(effectiveStudentId)
+      const student = await studentModel.findById(effectiveStudentId)
       if (!student || student.status !== 'ACTIVE') {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
       }
@@ -200,14 +202,14 @@ export function createAppointmentService({
       const maxRangeMs = MAX_SEARCH_RANGE_DAYS * 24 * 60 * 60 * 1000
       const to = requestedTo.getTime() - from.getTime() > maxRangeMs ? new Date(from.getTime() + maxRangeMs) : requestedTo
 
-      const candidateInstructors = instructorModel.findMany({
+      const candidateInstructors = await instructorModel.findMany({
         page: 1,
         pageSize: 1000,
         status: 'ACTIVE',
       })
-      const candidateVehicles = vehicleModel
-        .findMany({ page: 1, pageSize: 1000, status: 'ACTIVE' })
-        .filter((vehicle) => vehicle.category_id === effectiveCategoryId)
+      const candidateVehicles = (await vehicleModel.findMany({ page: 1, pageSize: 1000, status: 'ACTIVE' })).filter(
+        (vehicle) => vehicle.category_id === effectiveCategoryId,
+      )
 
       const slots: AvailableSlot[] = []
       let cursor = new Date(from)
@@ -224,20 +226,31 @@ export function createAppointmentService({
         const startIso = start.toISOString()
         const endIso = end.toISOString()
 
-        if (!appointmentModel.isStudentFree(effectiveStudentId, startIso, endIso)) {
+        if (!(await appointmentModel.isStudentFree(effectiveStudentId, startIso, endIso))) {
           continue
         }
 
-        const instructor = candidateInstructors.find(
-          (candidate) =>
-            isInstructorAvailable(candidate.id, start, end) &&
-            appointmentModel.isInstructorFree(candidate.id, startIso, endIso),
-        )
+        // First candidate, in order, that is both available and free — a plain loop
+        // because the checks are async (Array#find can't await its predicate).
+        let instructor: (typeof candidateInstructors)[number] | undefined
+        for (const candidate of candidateInstructors) {
+          if (
+            (await isInstructorAvailable(candidate.id, start, end)) &&
+            (await appointmentModel.isInstructorFree(candidate.id, startIso, endIso))
+          ) {
+            instructor = candidate
+            break
+          }
+        }
         if (!instructor) continue
 
-        const vehicle = candidateVehicles.find((candidate) =>
-          appointmentModel.isVehicleFree(candidate.id, startIso, endIso),
-        )
+        let vehicle: (typeof candidateVehicles)[number] | undefined
+        for (const candidate of candidateVehicles) {
+          if (await appointmentModel.isVehicleFree(candidate.id, startIso, endIso)) {
+            vehicle = candidate
+            break
+          }
+        }
         if (!vehicle) continue
 
         slots.push({
@@ -253,12 +266,12 @@ export function createAppointmentService({
       return slots
     },
 
-    book({ studentId, instructorId, vehicleId, categoryId, startAt, durationMinutes }, requester) {
+    async book({ studentId, instructorId, vehicleId, categoryId, startAt, durationMinutes }, requester) {
       // Same STUDENT-role override as searchSlots — see design.md.
       let effectiveStudentId = studentId
       let effectiveCategoryId = categoryId
       if (requester.role === 'STUDENT') {
-        const own = studentModel.findByUserId(requester.userId)
+        const own = await studentModel.findByUserId(requester.userId)
         if (!own) {
           throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
         }
@@ -292,17 +305,17 @@ export function createAppointmentService({
       const duration = parseDuration(durationMinutes)
       const end = new Date(start.getTime() + duration * 60 * 1000)
 
-      const student = studentModel.findById(effectiveStudentId)
+      const student = await studentModel.findById(effectiveStudentId)
       if (!student || student.status !== 'ACTIVE') {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Aluno inválido ou inativo.')
       }
 
-      const instructor = instructorModel.findById(instructorId)
+      const instructor = await instructorModel.findById(instructorId)
       if (!instructor || instructor.status !== 'ACTIVE') {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Instrutor inválido ou inativo.')
       }
 
-      const vehicle = vehicleModel.findById(vehicleId)
+      const vehicle = await vehicleModel.findById(vehicleId)
       if (!vehicle || vehicle.status !== 'ACTIVE') {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Veículo inválido ou indisponível.')
       }
@@ -317,76 +330,84 @@ export function createAppointmentService({
       if (!meetsAdvanceNotice(start, new Date())) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Antecedência mínima não respeitada.')
       }
-      if (!isInstructorAvailable(instructorId, start, end)) {
+      if (!(await isInstructorAvailable(instructorId, start, end))) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Instrutor indisponível nesse horário.')
       }
 
       const startIso = start.toISOString()
       const endIso = end.toISOString()
 
-      // Synchronous critical section, deliberately: node:sqlite's DatabaseSync API
-      // is synchronous, and Node's single-threaded event loop can't interleave
-      // another request's handler into a `BEGIN...COMMIT` block that never awaits.
-      // That (not a DB-level lock) is what gives RN-016 its concurrency guarantee
-      // here — see design.md. Keep this block free of `await`.
-      db.exec('BEGIN')
+      // RN-016 under concurrency: the three checks and the insert run in one transaction
+      // for a friendly, specific 409 in the common case. Two requests can still pass the
+      // checks at the same time (READ COMMITTED) — the exclusion constraints from
+      // migration 0007 then make the second insert fail with 23P01, translated below to
+      // the same 409 the check would have produced.
       try {
-        if (!appointmentModel.isStudentFree(effectiveStudentId, startIso, endIso)) {
+        return await database.withTransaction(async (tx) => {
+          const txAppointmentModel = createAppointmentModel(tx)
+
+          if (!(await txAppointmentModel.isStudentFree(effectiveStudentId, startIso, endIso))) {
+            throw new ApiError(409, 'APPOINTMENT_STUDENT_CONFLICT', 'O aluno já possui uma aula nesse horário.')
+          }
+          if (!(await txAppointmentModel.isInstructorFree(instructorId, startIso, endIso))) {
+            throw new ApiError(409, 'APPOINTMENT_INSTRUCTOR_CONFLICT', 'O instrutor já possui uma aula nesse horário.')
+          }
+          if (!(await txAppointmentModel.isVehicleFree(vehicleId, startIso, endIso))) {
+            throw new ApiError(409, 'APPOINTMENT_VEHICLE_CONFLICT', 'O veículo já possui uma aula nesse horário.')
+          }
+
+          return txAppointmentModel.create({
+            id: randomUUID(),
+            studentId: effectiveStudentId,
+            instructorId,
+            vehicleId,
+            categoryId: effectiveCategoryId,
+            startAt: startIso,
+            endAt: endIso,
+            createdBy: requester.userId,
+          })
+        })
+      } catch (error) {
+        if (isExclusionViolation(error, 'appointment_student_no_overlap')) {
           throw new ApiError(409, 'APPOINTMENT_STUDENT_CONFLICT', 'O aluno já possui uma aula nesse horário.')
         }
-        if (!appointmentModel.isInstructorFree(instructorId, startIso, endIso)) {
+        if (isExclusionViolation(error, 'appointment_instructor_no_overlap')) {
           throw new ApiError(409, 'APPOINTMENT_INSTRUCTOR_CONFLICT', 'O instrutor já possui uma aula nesse horário.')
         }
-        if (!appointmentModel.isVehicleFree(vehicleId, startIso, endIso)) {
+        if (isExclusionViolation(error, 'appointment_vehicle_no_overlap')) {
           throw new ApiError(409, 'APPOINTMENT_VEHICLE_CONFLICT', 'O veículo já possui uma aula nesse horário.')
         }
-
-        const appointment = appointmentModel.create({
-          id: randomUUID(),
-          studentId: effectiveStudentId,
-          instructorId,
-          vehicleId,
-          categoryId: effectiveCategoryId,
-          startAt: startIso,
-          endAt: endIso,
-          createdBy: requester.userId,
-        })
-
-        db.exec('COMMIT')
-        return appointment
-      } catch (error) {
-        db.exec('ROLLBACK')
         throw error
       }
     },
 
-    list({ page, pageSize }, requester) {
+    async list({ page, pageSize }, requester) {
       const parsedPage = parsePage(page)
       const parsedPageSize = parsePageSize(pageSize)
 
       let instructorId: string | undefined
       let studentId: string | undefined
       if (requester.role === 'INSTRUCTOR') {
-        const instructor = instructorModel.findByUserId(requester.userId)
+        const instructor = await instructorModel.findByUserId(requester.userId)
         if (!instructor) {
           return { items: [], page: parsedPage, pageSize: parsedPageSize, total: 0 }
         }
         instructorId = instructor.id
       } else if (requester.role === 'STUDENT') {
-        const student = studentModel.findByUserId(requester.userId)
+        const student = await studentModel.findByUserId(requester.userId)
         if (!student) {
           return { items: [], page: parsedPage, pageSize: parsedPageSize, total: 0 }
         }
         studentId = student.id
       }
 
-      const items = appointmentModel.findMany({
+      const items = await appointmentModel.findMany({
         page: parsedPage,
         pageSize: parsedPageSize,
         instructorId,
         studentId,
       })
-      const total = appointmentModel.count({ instructorId, studentId })
+      const total = await appointmentModel.count({ instructorId, studentId })
 
       return { items, page: parsedPage, pageSize: parsedPageSize, total }
     },

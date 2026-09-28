@@ -98,7 +98,7 @@ test('auth: forgot-password answers identically for known and unknown e-mails', 
 })
 
 test('auth: reset-password rejects a bad token, accepts a real one and revokes sessions', async (t) => {
-  const row = server.db.prepare('SELECT id FROM password_reset_token LIMIT 1').get() as { id: string }
+  const row = (await server.db.query<{ id: string }>('SELECT id FROM password_reset_token LIMIT 1')).rows[0]!
   const before = await call('POST', '/auth/login', {
     body: { email: 'aluno1@autoagenda.local', password: 'Demo@123' },
   })

@@ -1,7 +1,6 @@
-import { DatabaseSync } from 'node:sqlite'
-import { mkdirSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createDatabase } from '../src/database/connection.ts'
 import { runMigrations } from './migrate.ts'
 import {
   seedDemoUser,
@@ -11,30 +10,27 @@ import {
   seedDemoAppointments,
 } from './seed.ts'
 
-const DB_PATH = process.env.DB_PATH || 'data/app.db'
-const MIGRATIONS_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../src/database/migrations',
-)
+const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '../src/database/migrations')
 
-const alreadyExisted = existsSync(DB_PATH)
+const databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl) {
+  console.error('Missing required environment variable: DATABASE_URL. See .env.example.')
+  process.exit(1)
+}
 
-mkdirSync(dirname(DB_PATH), { recursive: true })
+const db = createDatabase(databaseUrl)
 
-const db = new DatabaseSync(DB_PATH)
-db.exec('PRAGMA journal_mode = WAL;')
-
-runMigrations(db, MIGRATIONS_DIR)
-await seedDemoUser(db)
-await seedDemoStudents(db)
-seedDemoVehicles(db)
-await seedDemoInstructors(db)
-seedDemoAppointments(db)
-
-db.close()
-
-console.log(
-  alreadyExisted
-    ? `SQLite database already set up at ${DB_PATH}`
-    : `SQLite database created at ${DB_PATH}`,
-)
+try {
+  await runMigrations(db, MIGRATIONS_DIR)
+  await seedDemoUser(db)
+  await seedDemoStudents(db)
+  await seedDemoVehicles(db)
+  await seedDemoInstructors(db)
+  await seedDemoAppointments(db)
+  console.log('PostgreSQL database is set up (migrations applied, demo data seeded).')
+} catch (error) {
+  console.error('Database setup failed:', error instanceof Error ? error.message : error)
+  process.exitCode = 1
+} finally {
+  await db.close()
+}

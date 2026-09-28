@@ -1,0 +1,24 @@
+# Local PostgreSQL for development. From the repo root:
+#   docker compose -f infra/docker-compose.yml up -d
+# Matches the DATABASE_URL in apps/api/.env.example.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: auto-agenda-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: auto_agenda
+      POSTGRES_PASSWORD: auto_agenda
+      POSTGRES_DB: auto_agenda
+    ports:
+      - '5432:5432'
+    volumes:
+      - auto_agenda_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U auto_agenda -d auto_agenda']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  auto_agenda_pgdata:
