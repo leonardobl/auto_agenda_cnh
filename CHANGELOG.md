@@ -2,6 +2,12 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-10-03
+
+### Adicionado
+
+- Artefatos de planejamento e qualidade exigidos pelo Projeto Integrador II: diagramas UML (casos de uso, classes, sequência, atividades, estados, componentes), DER e decisões do banco, especificação OpenAPI da API, plano e relatório de testes (execução real contra PostgreSQL), jornadas de UX com capturas de tela reais dos três perfis, manual de uso (`MANUAL_DE_USO.md`), template de avaliação para os 5 avaliadores e roteiro do vídeo demonstrativo.
+
 ## 2026-09-28
 
 ### Alterado

@@ -46,6 +46,9 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 - [x] Back-end em MVC (`routes/` `controllers/` `models/` `views/`) — `migrate-api-to-mvc`. Exigência do enunciado do PI II; mesmas rotas e respostas de antes, travadas por uma suíte de caracterização (`node:test` + snapshot)
 - [ ] Testes do back-end (regras de negócio, agendamento, permissões) — próxima change; a suíte de caracterização é só a rede de segurança da migração
 - [x] Troca de SGBD (SQLite → PostgreSQL, como previsto em `docs/`) — `migrate-db-to-postgres`. Docker Compose para o banco local, migrations em dialeto Postgres, models/services assíncronos e conflito de horário garantido por *exclusion constraints*; mesmas respostas HTTP (snapshot inalterado)
+- [x] Artefatos de planejamento/qualidade do PI II (`docs/10` §3) — `academic-delivery-artifacts`: diagramas UML, DER, OpenAPI, plano/relatório de testes, jornadas de UX com capturas reais, manual de uso, template de avaliação e roteiro de vídeo. Ver "Documentação" no README para os links
+- [ ] 5 avaliações reais + PDF consolidado (`docs/07-avaliacoes`) — depende de pessoas externas; template já pronto
+- [ ] Vídeo demonstrativo gravado (`docs/08-video`) — depende do usuário; roteiro já pronto
 
 ## Como manter este checklist
 

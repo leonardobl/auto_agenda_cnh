@@ -1,0 +1,672 @@
+openapi: 3.0.3
+info:
+  title: AutoAgenda API
+  version: "1.0"
+  description: >
+    API do AutoAgenda (Projeto Integrador II), gerada a partir das rotas reais em
+    apps/api/src/routes/. Autenticação por token opaco (Authorization: Bearer),
+    não por cookie HttpOnly — ver "Reconciling with the academic spec" no CLAUDE.md.
+servers:
+  - url: http://localhost:3333
+    description: Ambiente local (ver README.md)
+security:
+  - bearerAuth: []
+tags:
+  - name: health
+  - name: auth
+  - name: students
+  - name: vehicles
+  - name: instructors
+  - name: appointments
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Liveness
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthOk" }
+
+  /health/db:
+    get:
+      tags: [health]
+      summary: Readiness (conectividade com o PostgreSQL)
+      security: []
+      responses:
+        "200":
+          description: Banco acessível
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthOk" }
+        "503":
+          description: Banco indisponível
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthError" }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Autenticar
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Sessão criada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "401":
+          description: E-mail ou senha inválidos (mensagem genérica, SEG-005)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Encerrar a sessão atual
+      responses:
+        "204": { description: Sessão revogada }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /me:
+    get:
+      tags: [auth]
+      summary: Usuário autenticado
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthenticatedUser" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /auth/forgot-password:
+    post:
+      tags: [auth]
+      summary: Solicitar redefinição de senha (mock — link é logado no console da API)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { email: { type: string, format: email } }
+      responses:
+        "200":
+          description: Resposta idêntica exista ou não o e-mail (evita enumeração)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+
+  /auth/reset-password:
+    post:
+      tags: [auth]
+      summary: Redefinir a senha com um token válido
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: Senha redefinida; todas as sessões anteriores são revogadas
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+        "400":
+          description: Link inválido ou expirado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /license-categories:
+    get:
+      tags: [students]
+      summary: Categorias de CNH (A/B/AB/C/D/E)
+      security: [{ bearerAuth: [] }]
+      description: Acessível a ADMIN e STUDENT (não apenas Admin).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LicenseCategory" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /students:
+    get:
+      tags: [students]
+      summary: Listar alunos (Admin)
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: pageSize, in: query, schema: { type: integer } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [ACTIVE, INACTIVE] } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentPage" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [students]
+      summary: Cadastrar aluno (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudentInput" }
+      responses:
+        "201":
+          description: Criado
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Student" } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Documento já cadastrado (STUDENT_DOCUMENT_CONFLICT)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /students/me:
+    get:
+      tags: [students]
+      summary: Meu perfil (Aluno)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Student" } } } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [students]
+      summary: Editar meu telefone (Aluno)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { phone: { type: string } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Student" } } } }
+
+  /students/{id}:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      tags: [students]
+      summary: Obter aluno (Admin)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Student" } } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [students]
+      summary: Editar aluno (Admin)
+      requestBody:
+        content:
+          application/json: { schema: { $ref: "#/components/schemas/StudentInput" } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Student" } } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Documento já cadastrado
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+  /students/{id}/deactivate:
+    post:
+      tags: [students]
+      summary: Inativar aluno (Admin) — nunca é excluído fisicamente
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Student" } } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /students/{id}/create-account:
+    post:
+      tags: [students]
+      summary: Conceder acesso de login a um aluno já cadastrado (Admin)
+      parameters: [{ $ref: "#/components/parameters/Id" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        "201": { description: Conta criada, content: { application/json: { schema: { $ref: "#/components/schemas/Student" } } } }
+        "409":
+          description: STUDENT_ALREADY_HAS_ACCOUNT ou STUDENT_EMAIL_CONFLICT
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+  /vehicles:
+    get:
+      tags: [vehicles]
+      summary: Listar veículos (Admin)
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: pageSize, in: query, schema: { type: integer } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [ACTIVE, MAINTENANCE, INACTIVE] } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/VehiclePage" } } } }
+    post:
+      tags: [vehicles]
+      summary: Cadastrar veículo (Admin)
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/VehicleInput" } } }
+      responses:
+        "201": { description: Criado, content: { application/json: { schema: { $ref: "#/components/schemas/Vehicle" } } } }
+        "409":
+          description: Placa já cadastrada (VEHICLE_PLATE_CONFLICT)
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+  /vehicles/{id}:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      tags: [vehicles]
+      summary: Obter veículo (Admin)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Vehicle" } } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [vehicles]
+      summary: Editar veículo, incluindo status (Admin) — não há endpoint dedicado de "desativar"
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/VehicleInput" } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Vehicle" } } } }
+
+  /instructors:
+    get:
+      tags: [instructors]
+      summary: Listar instrutores (Admin)
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: pageSize, in: query, schema: { type: integer } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/InstructorPage" } } } }
+    post:
+      tags: [instructors]
+      summary: Cadastrar instrutor com conta de login própria (Admin)
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/InstructorInput" } } }
+      responses:
+        "201": { description: Criado, content: { application/json: { schema: { $ref: "#/components/schemas/Instructor" } } } }
+        "409":
+          description: INSTRUCTOR_EMAIL_CONFLICT, INSTRUCTOR_CREDENTIAL_CONFLICT ou INSTRUCTOR_DOCUMENT_CONFLICT
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+  /instructors/me:
+    get:
+      tags: [instructors]
+      summary: Meu perfil (Instrutor)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Instructor" } } } }
+    patch:
+      tags: [instructors]
+      summary: Editar meu telefone (Instrutor)
+      requestBody:
+        content: { application/json: { schema: { type: object, properties: { phone: { type: string } } } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Instructor" } } } }
+
+  /instructors/{id}:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      tags: [instructors]
+      summary: Obter instrutor (Admin)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Instructor" } } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [instructors]
+      summary: Editar instrutor — só campos de perfil (Admin); e-mail/senha nunca mudam por aqui
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/InstructorInput" } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Instructor" } } } }
+
+  /instructors/{id}/availability:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      tags: [instructors]
+      summary: Listar janelas semanais de disponibilidade (Admin ou o próprio instrutor)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/Availability" } }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [instructors]
+      summary: Declarar uma janela semanal de disponibilidade
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weekday, startTime, endTime]
+              properties:
+                weekday: { type: integer, minimum: 0, maximum: 6 }
+                startTime: { type: string, example: "08:00" }
+                endTime: { type: string, example: "18:00" }
+      responses:
+        "201": { description: Criada, content: { application/json: { schema: { $ref: "#/components/schemas/Availability" } } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /instructors/{id}/blocks:
+    parameters: [{ $ref: "#/components/parameters/Id" }]
+    get:
+      tags: [instructors]
+      summary: Listar bloqueios pontuais (Admin ou o próprio instrutor)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/Block" } }
+    post:
+      tags: [instructors]
+      summary: "Registrar um bloqueio pontual (ex.: consulta médica)"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [startAt, endAt, reason]
+              properties:
+                startAt: { type: string, format: date-time }
+                endAt: { type: string, format: date-time }
+                reason: { type: string }
+      responses:
+        "201": { description: Criado, content: { application/json: { schema: { $ref: "#/components/schemas/Block" } } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /availability/slots:
+    get:
+      tags: [appointments]
+      summary: Buscar horários disponíveis (Admin ou Aluno)
+      description: >
+        Para um Aluno, studentId/categoryId enviados na query são ignorados — sempre
+        resolvidos a partir da própria conta (self-service).
+      parameters:
+        - { name: studentId, in: query, schema: { type: string }, description: "Ignorado se o requester for STUDENT" }
+        - { name: categoryId, in: query, schema: { type: string }, description: "Ignorado se o requester for STUDENT" }
+        - { name: dateFrom, in: query, schema: { type: string, format: date } }
+        - { name: dateTo, in: query, schema: { type: string, format: date } }
+        - { name: durationMinutes, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: "#/components/schemas/Slot" } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /appointments:
+    get:
+      tags: [appointments]
+      summary: Listar agendamentos (escopado por perfil no servidor)
+      description: >
+        Admin vê todos; Instrutor vê só os próprios; Aluno vê só os próprios.
+        Sempre inclui student_full_name/instructor_full_name/vehicle_plate resolvidos
+        via JOIN, já que Instrutor e Aluno não têm acesso a /students, /instructors nem /vehicles.
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: pageSize, in: query, schema: { type: integer } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AppointmentPage" } } } }
+    post:
+      tags: [appointments]
+      summary: Reservar uma aula (Admin ou Aluno)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [instructorId, vehicleId, startAt]
+              properties:
+                studentId: { type: string, description: "Ignorado se o requester for STUDENT" }
+                categoryId: { type: string, description: "Ignorado se o requester for STUDENT" }
+                instructorId: { type: string }
+                vehicleId: { type: string }
+                startAt: { type: string, format: date-time }
+                durationMinutes: { type: integer }
+      responses:
+        "201": { description: Criado, content: { application/json: { schema: { $ref: "#/components/schemas/Appointment" } } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: >
+            APPOINTMENT_STUDENT_CONFLICT, APPOINTMENT_INSTRUCTOR_CONFLICT ou
+            APPOINTMENT_VEHICLE_CONFLICT — inclusive sob concorrência real, via
+            exclusion constraint (ver docs/04-banco/decisoes.md)
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token de sessão opaco retornado por POST /auth/login (não JWT).
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      description: Autenticação necessária (AUTHENTICATION_REQUIRED)
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    Forbidden:
+      description: Sem permissão para este perfil (FORBIDDEN)
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    NotFound:
+      description: Recurso não encontrado
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    ValidationError:
+      description: Corpo/parâmetros inválidos (VALIDATION_ERROR)
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+
+  schemas:
+    HealthOk:
+      type: object
+      properties: { status: { type: string, example: ok } }
+    HealthError:
+      type: object
+      properties: { status: { type: string, example: error }, message: { type: string } }
+    Message:
+      type: object
+      properties: { message: { type: string } }
+    Error:
+      type: object
+      description: Envelope de erro padrão (docs/04 §6.3)
+      properties:
+        code: { type: string, example: VALIDATION_ERROR }
+        message: { type: string }
+        correlationId: { type: string, format: uuid }
+        fieldErrors: { type: object, additionalProperties: { type: array, items: { type: string } } }
+    AuthenticatedUser:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [ADMIN, INSTRUCTOR, STUDENT] }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+    LoginResponse:
+      type: object
+      properties:
+        token: { type: string }
+        user: { $ref: "#/components/schemas/AuthenticatedUser" }
+    LicenseCategory:
+      type: object
+      properties: { id: { type: string }, code: { type: string }, name: { type: string } }
+    Student:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string, nullable: true }
+        full_name: { type: string }
+        document: { type: string, nullable: true }
+        phone: { type: string }
+        birth_date: { type: string, format: date, nullable: true }
+        category_id: { type: string }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    StudentInput:
+      type: object
+      properties:
+        fullName: { type: string }
+        document: { type: string, nullable: true }
+        phone: { type: string }
+        birthDate: { type: string, format: date, nullable: true }
+        categoryId: { type: string }
+    StudentPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Student" } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    Vehicle:
+      type: object
+      properties:
+        id: { type: string }
+        plate: { type: string }
+        brand: { type: string }
+        model: { type: string }
+        year: { type: integer }
+        category_id: { type: string }
+        status: { type: string, enum: [ACTIVE, MAINTENANCE, INACTIVE] }
+    VehicleInput:
+      type: object
+      properties:
+        plate: { type: string }
+        brand: { type: string }
+        model: { type: string }
+        year: { type: integer }
+        categoryId: { type: string }
+        status: { type: string, enum: [ACTIVE, MAINTENANCE, INACTIVE] }
+    VehiclePage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Vehicle" } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    Instructor:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        full_name: { type: string }
+        document: { type: string, nullable: true }
+        credential_number: { type: string }
+        phone: { type: string }
+        status: { type: string }
+        email: { type: string }
+    InstructorInput:
+      type: object
+      properties:
+        email: { type: string }
+        password: { type: string }
+        fullName: { type: string }
+        document: { type: string, nullable: true }
+        credentialNumber: { type: string }
+        phone: { type: string }
+    InstructorPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Instructor" } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    Availability:
+      type: object
+      properties:
+        id: { type: string }
+        instructor_id: { type: string }
+        weekday: { type: integer }
+        start_time: { type: string }
+        end_time: { type: string }
+        active: { type: integer }
+    Block:
+      type: object
+      properties:
+        id: { type: string }
+        instructor_id: { type: string }
+        start_at: { type: string, format: date-time }
+        end_at: { type: string, format: date-time }
+        reason: { type: string }
+        created_by: { type: string }
+    Slot:
+      type: object
+      properties:
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        instructorId: { type: string }
+        instructorName: { type: string }
+        vehicleId: { type: string }
+        vehiclePlate: { type: string }
+    Appointment:
+      type: object
+      properties:
+        id: { type: string }
+        student_id: { type: string }
+        instructor_id: { type: string }
+        vehicle_id: { type: string }
+        category_id: { type: string }
+        start_at: { type: string, format: date-time }
+        end_at: { type: string, format: date-time }
+        status: { type: string, enum: [AGENDADA] }
+        student_full_name: { type: string }
+        instructor_full_name: { type: string }
+        vehicle_plate: { type: string }
+    AppointmentPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Appointment" } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }

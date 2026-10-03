@@ -206,5 +206,15 @@ curl -X POST http://localhost:3333/auth/logout -H 'Authorization: Bearer <token>
 
 ## Documentação
 
+- [MANUAL_DE_USO.md](MANUAL_DE_USO.md) — como usar o sistema em cada perfil (Admin, Instrutor, Aluno).
 - [docs/](docs/) — especificação acadêmica completa (visão, requisitos, back-end, banco de dados, UX/UI, segurança, testes, arquitetura, rastreabilidade). `docs/README.md` explica a estrutura e observa que o DOC-03 (especificação de front-end) nunca foi entregue.
+- Artefatos de planejamento/qualidade produzidos ao longo do projeto, um por pasta de `docs/`:
+  - [docs/01-planejamento/revisao.md](docs/01-planejamento/revisao.md) — o que mudou desde o planejamento original.
+  - [docs/02-uml/](docs/02-uml/) — diagramas UML (casos de uso, classes, sequência, atividades, estados, componentes), em Mermaid.
+  - [docs/03-ux-ui/](docs/03-ux-ui/) — jornadas por perfil e capturas de tela reais (a aplicação implementada é o protótipo).
+  - [docs/04-banco/](docs/04-banco/) — DER e decisões do projeto físico do banco (PostgreSQL).
+  - [docs/05-api/openapi.yaml](docs/05-api/openapi.yaml) — especificação OpenAPI de toda a API.
+  - [docs/06-testes/](docs/06-testes/) — plano de testes, relatório de execução real e checklist de verificação manual.
+  - [docs/07-avaliacoes/](docs/07-avaliacoes/) — template de avaliação para os 5 avaliadores e processo de consolidação em PDF.
+  - [docs/08-video/roteiro.md](docs/08-video/roteiro.md) — roteiro do vídeo demonstrativo.
 - [CLAUDE.md](CLAUDE.md) — convenções de código, arquitetura e fluxo de trabalho para quem (ou o que) for desenvolver neste repositório.
