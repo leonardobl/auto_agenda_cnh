@@ -1,0 +1,62 @@
+name: Deploy web (GitHub Pages)
+
+# Publishes only apps/web (a static build) to GitHub Pages. apps/api + PostgreSQL
+# need separate hosting (GitHub Pages serves static files only) — see README.md
+# "Demonstração pública" for where the live API is and how VITE_API_BASE_URL below
+# is set. Repo setting required once: Settings → Pages → Source: "GitHub Actions".
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/web/**
+      - packages/contracts/**
+      - .github/workflows/deploy-pages.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Build apps/web
+        env:
+          # Set once the API is deployed (see README.md) in Settings → Secrets and
+          # variables → Actions → Variables. Falls back to localhost so the build
+          # never fails outright before that — the deployed site just can't log in
+          # until the real value is set.
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'http://localhost:3333' }}
+          # Repository name: this is a GitHub Pages *project* page
+          # (leonardobl.github.io/auto_agenda_cnh/), served from a subpath.
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+        run: yarn workspace @auto-agenda-cnh/web build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

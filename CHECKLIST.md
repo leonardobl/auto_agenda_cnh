@@ -49,6 +49,7 @@ Legenda: `[x]` implementado e verificado · `[~]` em andamento (artefatos/planej
 - [x] Artefatos de planejamento/qualidade do PI II (`docs/10` §3) — `academic-delivery-artifacts`: diagramas UML, DER, OpenAPI, plano/relatório de testes, jornadas de UX com capturas reais, manual de uso, template de avaliação e roteiro de vídeo. Ver "Documentação" no README para os links
 - [ ] 5 avaliações reais + PDF consolidado (`docs/07-avaliacoes`) — depende de pessoas externas; template já pronto
 - [ ] Vídeo demonstrativo gravado (`docs/08-video`) — depende do usuário; roteiro já pronto
+- [~] Demonstração pública (GitHub Pages + Vercel + Supabase) — código/config prontos (`api/index.ts`, `vercel.json`, workflow de Pages, aviso de projeto de testes com credenciais na tela de login); falta o usuário concluir a configuração das contas Vercel/Supabase (`DATABASE_URL`, `APP_ORIGIN`, `VITE_API_BASE_URL`) — ver "Demonstração pública" no README
 
 ## Como manter este checklist
 

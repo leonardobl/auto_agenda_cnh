@@ -68,4 +68,13 @@ describe('Login', () => {
     cy.mount(<Login />)
     cy.contains('a', 'Esqueci minha senha').should('have.attr', 'href', '/esqueci-senha')
   })
+
+  it('Deve exibir o aviso de projeto de testes com as contas de demonstração', () => {
+    cy.mount(<Login />)
+
+    cy.contains('Projeto de testes').should('be.visible')
+    cy.contains('admin@autoagenda.local').should('be.visible')
+    cy.contains('instrutor1@autoagenda.local').should('be.visible')
+    cy.contains('aluno1@autoagenda.local').should('be.visible')
+  })
 })

@@ -7,6 +7,12 @@ Todas as mudanças relevantes deste projeto são documentadas neste arquivo, org
 ### Adicionado
 
 - Formulário do Google Forms para a avaliação dos 5 colegas/profissionais, linkado em `docs/07-avaliacoes/README.md` no lugar do processo manual em Markdown.
+- Demonstração pública: front-end publicado no GitHub Pages a cada push em `main` (`.github/workflows/deploy-pages.yml`); back-end pronto para rodar como função serverless na Vercel (`apps/api/api/index.ts`, `apps/api/vercel.json`), com o banco hospedado no Supabase. Passo a passo de configuração das contas em "Demonstração pública" no README.
+- Aviso na tela de login avisando que é um projeto de testes acadêmico (Cruzeiro do Sul Virtual), com as contas de demonstração dos três perfis.
+
+### Alterado
+
+- `apps/api`: `PORT` virou variável opcional (default `3333`); novo `DATABASE_SSL` habilita TLS para bancos gerenciados acessados pela internet pública (Supabase, Render, Neon, ...).
 
 ## 2026-10-03
 

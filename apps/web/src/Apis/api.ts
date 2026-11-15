@@ -18,7 +18,9 @@ api.interceptors.response.use(
   (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       clearSessionToken()
-      window.location.href = '/login'
+      // BASE_URL always ends in "/" (default "/", or "/<repo-name>/" on GitHub Pages —
+      // see vite.config.ts), so this never produces a double slash.
+      window.location.href = `${import.meta.env.BASE_URL}login`
     }
     return Promise.reject(error)
   },

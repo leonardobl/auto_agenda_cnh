@@ -27,11 +27,18 @@ export interface Database extends Queryable {
 interface CreateDatabaseOptions {
   // Sets `search_path` on every connection (tests use it to isolate a temporary schema).
   searchPath?: string
+  // Required by managed Postgres providers reached over the public internet (Supabase,
+  // Render, Neon, ...); `rejectUnauthorized: false` skips CA verification, which is
+  // the standard trade-off for these providers' self-signed/non-system-trusted certs —
+  // the connection is still encrypted, just not certificate-pinned. See
+  // config/env.ts's `databaseSsl` (DATABASE_SSL=true) for where this is decided.
+  ssl?: boolean
 }
 
 export function createDatabase(connectionString: string, options: CreateDatabaseOptions = {}): Database {
   const pool = new pg.Pool({
     connectionString,
+    ssl: options.ssl ? { rejectUnauthorized: false } : undefined,
     options: options.searchPath ? `-c search_path=${options.searchPath}` : undefined,
   })
 

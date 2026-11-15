@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AutoAgenda</title>
+    <!--
+      GitHub Pages serves this file for any URL it doesn't recognize as a static
+      asset — which, for a client-side-routed SPA, is every deep link (e.g.
+      /auto_agenda_cnh/admin/alunos) and every page refresh on one. There is no
+      server-side rewrite available, so this re-encodes the real path into a query
+      string and redirects to the site root; index.html's inline script (see below)
+      decodes it back before React Router mounts. Standard "spa-github-pages" trick
+      (https://github.com/rafgraph/spa-github-pages) — pathSegmentsToKeep is 1
+      because this is a project page served from /auto_agenda_cnh/, not a user/org
+      page served from the domain root.
+    -->
+    <script>
+      var pathSegmentsToKeep = 1
+      var l = window.location
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname
+            .split('/')
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join('/') +
+          '/?/' +
+          l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash,
+      )
+    </script>
+  </head>
+  <body></body>
+</html>

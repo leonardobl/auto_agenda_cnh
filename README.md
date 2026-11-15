@@ -27,6 +27,46 @@ Este projeto não implementa um back-end de verdade para toda tela/endpoint que 
 - Admin > Relatórios — botão de exportação simula sucesso, nenhum arquivo é gerado
 - Página institucional (`/`) — site público de divulgação da autoescola: texto e dados de contato fictícios, galeria com ilustrações locais em vez de fotos reais, links de WhatsApp/redes sociais no formato real mas com número/handles fictícios; nenhum formulário é submetido a um back-end
 
+## Demonstração pública
+
+O front-end (`apps/web`) é publicado automaticamente no **GitHub Pages** a cada push em `main` que toque `apps/web/` (`.github/workflows/deploy-pages.yml`), em `https://<usuário>.github.io/<repositório>/`. A tela de login já traz um aviso visível de que é um projeto de testes acadêmico, com as contas de demonstração (ver "Login de demonstração" abaixo).
+
+GitHub Pages só serve arquivos estáticos — **o back-end (`apps/api`) e o banco precisam de outra hospedagem** para o site publicado funcionar de ponta a ponta (login, cadastros, agendamento). Enquanto isso não estiver configurado, o site abre normalmente, mas nenhuma chamada à API terá sucesso. Para a demonstração pública deste projeto, isso é: **Supabase** (PostgreSQL gerenciado) + **Vercel** (API como função serverless, `apps/api/api/index.ts` + `apps/api/vercel.json`).
+
+### Habilitar o GitHub Pages (uma vez)
+
+1. Settings do repositório → Pages → Source: **"GitHub Actions"**.
+2. O workflow (`.github/workflows/deploy-pages.yml`) builda em todo push em `main` que toque `apps/web/`; a URL fica em `https://<usuário>.github.io/<repositório>/`.
+
+### Banco de dados: Supabase
+
+1. Crie um projeto em [supabase.com](https://supabase.com) (grátis).
+2. **Project Settings → Database → Connection string** → aba **"Transaction pooler"** (porta `6543`) — copie essa URI, não a "Direct connection": a API roda como função serverless na Vercel, que abre/fecha muitas conexões curtas, e é exatamente para isso que o pooler (PgBouncer) existe. Substitua `[YOUR-PASSWORD]` na URI pela senha do banco definida na criação do projeto.
+3. Essa URI vira o `DATABASE_URL` da Vercel (próxima seção) — nunca vai para o repositório nem para `.env.example` com valor real.
+4. Rode as migrations e o seed de demonstração contra esse banco (uma vez, da sua máquina, apontando `DATABASE_URL`/`DATABASE_SSL=true` para o Supabase):
+   ```bash
+   DATABASE_URL="<uri do Supabase>" DATABASE_SSL=true yarn workspace @auto-agenda-cnh/api db:setup
+   ```
+
+### API: Vercel
+
+1. [vercel.com](https://vercel.com) → **Add New → Project** → importe este repositório.
+2. **Root Directory**: `apps/api` (a Vercel detecta `api/index.ts` como função serverless automaticamente — não precisa de "Build Command").
+3. **Environment Variables** do projeto:
+
+   | Variável | Valor |
+   |---|---|
+   | `NODE_ENV` | `production` |
+   | `APP_ORIGIN` | a URL do GitHub Pages, **sem o caminho** (ex.: `https://leonardobl.github.io`, não `.../auto_agenda_cnh`) — é contra isso que o CORS compara |
+   | `DATABASE_URL` | a connection string do Supabase (passo anterior) |
+   | `DATABASE_SSL` | `true` |
+
+4. Deploy. A URL pública fica algo como `https://auto-agenda-cnh.vercel.app` — teste com `curl https://<url>/health`.
+
+### Conectar as duas pontas
+
+Com a API no ar, volte ao GitHub: Settings → Secrets and variables → Actions → aba **Variables** → crie `VITE_API_BASE_URL` com a URL da Vercel do passo anterior. Rode o workflow de novo (push em `apps/web/` ou "Run workflow" manual) para o build do Pages pegar essa variável.
+
 ## Estrutura do repositório
 
 Monorepo (Yarn workspaces):

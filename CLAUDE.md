@@ -157,6 +157,8 @@ Setup from a clean clone: `docker compose -f infra/docker-compose.yml up -d` →
 
 **Requires Node ≥ 22.18** (unflagged type-stripping, plus `--env-file-if-exists`) — declared in `apps/api/package.json`'s `engines` field.
 
+The hosted public demo (see "Demonstração pública" in README.md) uses **Supabase** (managed PostgreSQL, same schema/migrations) instead of the local Docker Postgres — only `DATABASE_URL`/`DATABASE_SSL` change, no code or migration differs between the two.
+
 ## Architecture: backend
 
 `apps/api` is a Node.js/Express server living in the same repo as the frontend (see Repository structure above — **monorepo, not a separate-service split**), matching DOC-09 §1's architecture (React client, REST API, database — the browser never talks to the database directly).
@@ -174,7 +176,8 @@ The layout deliberately deviates from `docs/04` §2's `http/routes`/`http/contro
 
 What exists so far:
 
-- `src/config/env.ts` — reads and validates required env vars (`NODE_ENV`, `PORT`, `APP_ORIGIN`, `DATABASE_URL`), fails fast (process exits) if any required var is missing or invalid (BE-013).
+- `src/config/env.ts` — reads and validates required env vars (`NODE_ENV`, `APP_ORIGIN`, `DATABASE_URL`), fails fast (process exits) if any required var is missing or invalid (BE-013). `PORT` is optional (defaults to 3333) and only matters to `server.ts`'s `.listen()` — a host that assigns its own port (Render) or doesn't use one (Vercel's serverless entry, see below) doesn't need it. `DATABASE_SSL` is also optional (`"true"` enables TLS for managed Postgres reached over the public internet — Supabase, Render, Neon, ...; unset for the local Docker Postgres, which doesn't need it).
+- `api/index.ts` — the Vercel serverless entry point for the hosted demo (see "Demonstração pública" in README.md). Builds the same `Database`/`Express` app as `server.ts`, once at module scope so a warm invocation reuses the connection pool, but exports the Express app directly instead of calling `.listen()` — Vercel's Node runtime calls it as an `(req, res)` handler itself. `vercel.json` (repo root of this package) rewrites every path to this one function, so routes stay unprefixed (`/health`, `/auth/login`, ...), matching `apps/web`'s `VITE_API_BASE_URL` + relative-path calls.
 - `src/database/connection.ts` — `createDatabase(DATABASE_URL)` builds a `pg.Pool` and returns a `Database`: `query(sql, params)` (the pool) plus `withTransaction(fn)`, which reserves a client, runs `BEGIN`, calls `fn(tx)`, then `COMMIT` — or `ROLLBACK` on any error — and always releases the client. `Queryable` is the shared shape of the pool and a transaction client: every model factory takes a `Queryable`, so services rebuild the models they need on the `tx` inside `withTransaction` (see `studentService.createAccount`, `instructorService.register`, `appointmentService.book`). It also registers global type parsers: `timestamptz` → ISO 8601 string, `date` → raw `YYYY-MM-DD` string. Also here: `params.ts` (`bind(params, value)` → `$n` placeholder for dynamic WHERE clauses) and `errors.ts` (`isUniqueViolation`/`isExclusionViolation`, matching SQLSTATE `23505`/`23P01` plus the constraint name).
 - **Everything that touches the database is async** — models, services, controllers and `requireAuth` return/await Promises (Express 5 forwards a rejected handler promise to `errorHandler`, so no wrapper is needed). ESLint runs `@typescript-eslint/no-floating-promises` on `apps/api` (off only in `tests/`) to catch a forgotten `await`.
 - **PostgreSQL specifics to remember when writing SQL**: `"user"` is a reserved word and is always quoted; placeholders are `$1…$n`; use `ILIKE` for case-insensitive search and `COUNT(*)::int` (bigint otherwise arrives as a string); inserts/updates use `RETURNING *`; expiry uses the database clock (`now() + make_interval(secs => $n)`). Ids stay `TEXT` (not `uuid`) so a malformed id in a URL is a 404, not a `22P02` 500.
@@ -217,7 +220,7 @@ DOC-03 (which would otherwise define front-end routes, screens, and component co
 Required variables are declared in each package's own `.env.example` (committed) — copy it to that package's `.env` (gitignored, never committed) and fill in real values. Vite only exposes vars prefixed `VITE_` to client code; `apps/api` (Node-side) reads any env var directly and fails fast at startup if a required one is missing/invalid (see Architecture: backend above).
 
 - `apps/web` currently requires `VITE_API_BASE_URL` (the base URL of `apps/api`, consumed by the axios instance in `apps/web/src/Apis/api.ts`) — its first required variable, added alongside the auth integration.
-- `apps/api` currently requires `NODE_ENV`, `PORT`, `APP_ORIGIN` and `DATABASE_URL` (PostgreSQL connection string; the `.env.example` value works with `infra/docker-compose.yml`).
+- `apps/api` currently requires `NODE_ENV`, `APP_ORIGIN` and `DATABASE_URL` (PostgreSQL connection string; the `.env.example` value works with `infra/docker-compose.yml`). `PORT` and `DATABASE_SSL` are optional.
 
 **Whenever a new required env var is introduced, add it to the relevant package's `.env.example` (with an empty/placeholder value, never a real secret) in the same change**, and update the table in [README.md](README.md#configuração) — that's what a new setup follows, not this file.
 

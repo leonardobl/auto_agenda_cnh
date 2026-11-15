@@ -3,7 +3,7 @@ import { createDatabase } from './database/connection.ts'
 import { createApp } from './app.ts'
 
 const env = loadEnv()
-const db = createDatabase(env.databaseUrl)
+const db = createDatabase(env.databaseUrl, { ssl: env.databaseSsl })
 const app = createApp({ appOrigin: env.appOrigin, db })
 
 const server = app.listen(env.port, () => {
