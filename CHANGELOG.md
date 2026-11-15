@@ -2,6 +2,12 @@
 
 Todas as mudanças relevantes deste projeto são documentadas neste arquivo, organizadas por data (AAAA-MM-DD, da mais recente para a mais antiga), em português (pt-BR).
 
+## 2026-11-15
+
+### Adicionado
+
+- Formulário do Google Forms para a avaliação dos 5 colegas/profissionais, linkado em `docs/07-avaliacoes/README.md` no lugar do processo manual em Markdown.
+
 ## 2026-10-03
 
 ### Adicionado
